@@ -41,12 +41,14 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
 
     const initializeMap = () => {
       const kakao = window.kakao;
+      console.log("Initializing map... window.kakao:", !!kakao, "kakao.maps:", !!(kakao && kakao.maps));
       if (!kakao || !kakao.maps) {
         setMapError(true);
         return;
       }
 
       kakao.maps.load(() => {
+        console.log("kakao.maps.load callback triggered!");
         if (!mapContainerRef.current) return;
 
         // Default center: Seoul City Hall
@@ -68,15 +70,18 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
       script.async = true;
       document.head.appendChild(script);
       script.onload = () => {
+        console.log("Kakao Map Script Loaded! apiKey length:", apiKey?.length, "apiKey first 4 chars:", apiKey?.substring(0, 4));
         initializeMap();
       };
-      script.onerror = () => {
+      script.onerror = (e) => {
+        console.error("Kakao Map Script Load Failed (onerror triggered):", e);
         setMapError(true);
       };
     } else {
       if (window.kakao && window.kakao.maps) {
         initializeMap();
       } else {
+        console.log("Script already exists but window.kakao is not ready. Adding event listener...");
         script.addEventListener('load', initializeMap);
       }
     }
