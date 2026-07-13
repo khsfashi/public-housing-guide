@@ -156,6 +156,21 @@ export default function Home() {
       }
     } else {
       setUserProfile(null);
+      // Load global bookmarks on logout / guest mode
+      const storedBookmarks = localStorage.getItem('housing_hub_bookmarks_global');
+      if (storedBookmarks) {
+        try {
+          const loaded: FlatHouseUnit[] = JSON.parse(storedBookmarks);
+          const todayStr = new Date().toISOString().split('T')[0];
+          const valid = loaded.filter(b => b.deadlineDate >= todayStr);
+          setBookmarks(valid);
+        } catch (e) {
+          console.error(e);
+          setBookmarks([]);
+        }
+      } else {
+        setBookmarks([]);
+      }
     }
   }, [currentUser]);
 
@@ -223,6 +238,53 @@ export default function Home() {
     localStorage.setItem('housing_hub_profiles', JSON.stringify(profiles));
     setUserProfile(profileData);
     
+    // Merge guest bookmarks with user's existing bookmarks
+    const userBookmarksKey = `housing_hub_bookmarks_${username}`;
+    const storedUserBookmarks = localStorage.getItem(userBookmarksKey);
+    let userBookmarks: FlatHouseUnit[] = [];
+    if (storedUserBookmarks) {
+      try {
+        userBookmarks = JSON.parse(storedUserBookmarks);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
+    // Deduplicate by ID
+    const mergedMap = new Map<string, FlatHouseUnit>();
+    userBookmarks.forEach(b => mergedMap.set(b.id, b));
+    bookmarks.forEach(b => mergedMap.set(b.id, b));
+    const merged = Array.from(mergedMap.values());
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const valid = merged.filter(b => b.deadlineDate >= todayStr);
+    
+    localStorage.setItem(userBookmarksKey, JSON.stringify(valid));
+    setBookmarks(valid);
+    
+    // Clear global guest bookmarks after merging into user account
+    localStorage.removeItem('housing_hub_bookmarks_global');
+
+    // Auto-apply user preferences to dashboard filters
+    if (profileData.preferredProviders && profileData.preferredProviders.length > 0) {
+      setSelectedProviders(new Set(profileData.preferredProviders));
+    }
+    if (profileData.preferredHousingTypes && profileData.preferredHousingTypes.length > 0) {
+      setSelectedHousingTypes(new Set(profileData.preferredHousingTypes));
+    }
+    if (profileData.preferredMinPyeong !== undefined) {
+      setMinPyeong(profileData.preferredMinPyeong);
+    }
+    if (profileData.preferredMaxPyeong !== undefined) {
+      setMaxPyeong(profileData.preferredMaxPyeong);
+    }
+    if (profileData.preferredMaxDeposit !== undefined) {
+      setMaxDeposit(profileData.preferredMaxDeposit);
+    }
+    if (profileData.preferredMaxMonthlyRent !== undefined) {
+      setMaxMonthlyRent(profileData.preferredMaxMonthlyRent);
+    }
+
     // Default to recommendation sort when logging in
     setSortBy('recommendation');
   };
@@ -232,6 +294,20 @@ export default function Home() {
     localStorage.removeItem('housing_hub_current_user');
     setUserProfile(null);
     setSortBy('latest');
+    setHasStarted(false); // Redirect to intro screen
+
+    // Restore guest bookmarks
+    const storedBookmarks = localStorage.getItem('housing_hub_bookmarks_global');
+    if (storedBookmarks) {
+      try {
+        setBookmarks(JSON.parse(storedBookmarks));
+      } catch (e) {
+        console.error(e);
+        setBookmarks([]);
+      }
+    } else {
+      setBookmarks([]);
+    }
   };
 
   const handleUpdateProfile = (profileData: UserProfileData) => {

@@ -102,7 +102,7 @@ export default function Dashboard({
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [usernameInput, setUsernameInput] = useState('');
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'search' | 'bookmarks'>('search');
 
   const regionHierarchy = getRegionHierarchy();
 
@@ -121,6 +121,16 @@ export default function Dashboard({
 
   const [residenceYearsInput, setResidenceYearsInput] = useState(0);
   const [ageInput, setAgeInput] = useState('');
+
+  // Extended personalization form states
+  const [prefProviders, setPrefProviders] = useState<Set<ProviderType>>(new Set(['LH', 'SH', 'PRIVATE']));
+  const [prefHousingTypes, setPrefHousingTypes] = useState<Set<HousingType>>(
+    new Set(['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운'])
+  );
+  const [prefMinPyeong, setPrefMinPyeong] = useState(0);
+  const [prefMaxPyeong, setPrefMaxPyeong] = useState(45);
+  const [prefMaxDeposit, setPrefMaxDeposit] = useState(800000000);
+  const [prefMaxMonthlyRent, setPrefMaxMonthlyRent] = useState(2000000);
 
   // 3-level region parsing and combining helpers
   const parseProfileRegion = (regionStr: string | undefined) => {
@@ -217,6 +227,55 @@ export default function Dashboard({
     }
   };
 
+  const openEditProfile = () => {
+    if (userProfile) {
+      const parsedCurrent = parseProfileRegion(userProfile.currentRegion);
+      setCurrentSido(parsedCurrent.sido);
+      setCurrentSigungu(parsedCurrent.sigungu);
+      setCurrentGu(parsedCurrent.gu);
+      
+      setResidenceYearsInput(userProfile.residenceYears);
+      setAgeInput(userProfile.age);
+      
+      const parsedPref1 = parseProfileRegion(userProfile.preferredRegions[0]);
+      setPrefSido1(parsedPref1.sido);
+      setPrefSigungu1(parsedPref1.sigungu);
+      setPrefGu1(parsedPref1.gu);
+      
+      const parsedPref2 = parseProfileRegion(userProfile.preferredRegions[1]);
+      setPrefSido2(parsedPref2.sido);
+      setPrefSigungu2(parsedPref2.sigungu);
+      setPrefGu2(parsedPref2.gu);
+
+      // Load extended settings
+      setPrefProviders(new Set(userProfile.preferredProviders || ['LH', 'SH', 'PRIVATE']));
+      setPrefHousingTypes(new Set(userProfile.preferredHousingTypes || ['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운']));
+      setPrefMinPyeong(userProfile.preferredMinPyeong ?? 0);
+      setPrefMaxPyeong(userProfile.preferredMaxPyeong ?? 45);
+      setPrefMaxDeposit(userProfile.preferredMaxDeposit ?? 800000000);
+      setPrefMaxMonthlyRent(userProfile.preferredMaxMonthlyRent ?? 2000000);
+    } else {
+      setCurrentSido('ALL');
+      setCurrentSigungu('ALL');
+      setCurrentGu('ALL');
+      setResidenceYearsInput(0);
+      setAgeInput('');
+      setPrefSido1('ALL');
+      setPrefSigungu1('ALL');
+      setPrefGu1('ALL');
+      setPrefSido2('ALL');
+      setPrefSigungu2('ALL');
+      setPrefGu2('ALL');
+      setPrefProviders(new Set(['LH', 'SH', 'PRIVATE']));
+      setPrefHousingTypes(new Set(['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운']));
+      setPrefMinPyeong(0);
+      setPrefMaxPyeong(45);
+      setPrefMaxDeposit(800000000);
+      setPrefMaxMonthlyRent(2000000);
+    }
+    setIsEditProfileOpen(true);
+  };
+
   // Auth Submit Handlers
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,6 +308,13 @@ export default function Dashboard({
       setPrefSido2(parsedPref2.sido);
       setPrefSigungu2(parsedPref2.sigungu);
       setPrefGu2(parsedPref2.gu);
+
+      setPrefProviders(new Set(saved.preferredProviders || ['LH', 'SH', 'PRIVATE']));
+      setPrefHousingTypes(new Set(saved.preferredHousingTypes || ['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운']));
+      setPrefMinPyeong(saved.preferredMinPyeong ?? 0);
+      setPrefMaxPyeong(saved.preferredMaxPyeong ?? 45);
+      setPrefMaxDeposit(saved.preferredMaxDeposit ?? 800000000);
+      setPrefMaxMonthlyRent(saved.preferredMaxMonthlyRent ?? 2000000);
       
       setIsEditProfileOpen(false);
     } else {
@@ -256,7 +322,13 @@ export default function Dashboard({
         currentRegion: 'ALL',
         residenceYears: 0,
         age: '',
-        preferredRegions: []
+        preferredRegions: [],
+        preferredProviders: ['LH', 'SH', 'PRIVATE'],
+        preferredHousingTypes: ['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운'],
+        preferredMinPyeong: 0,
+        preferredMaxPyeong: 45,
+        preferredMaxDeposit: 800000000,
+        preferredMaxMonthlyRent: 2000000
       };
       onLogin(username, newProfile);
       setCurrentSido('ALL');
@@ -270,6 +342,12 @@ export default function Dashboard({
       setPrefSido2('ALL');
       setPrefSigungu2('ALL');
       setPrefGu2('ALL');
+      setPrefProviders(new Set(['LH', 'SH', 'PRIVATE']));
+      setPrefHousingTypes(new Set(['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운']));
+      setPrefMinPyeong(0);
+      setPrefMaxPyeong(45);
+      setPrefMaxDeposit(800000000);
+      setPrefMaxMonthlyRent(2000000);
       setIsEditProfileOpen(true); // Open profile settings immediately for new signup
     }
     setUsernameInput('');
@@ -286,10 +364,23 @@ export default function Dashboard({
       currentRegion: combinedCurrent,
       residenceYears: Number(residenceYearsInput),
       age: ageInput,
-      preferredRegions: [combinedPref1, combinedPref2].filter(r => r !== 'ALL')
+      preferredRegions: [combinedPref1, combinedPref2].filter(r => r !== 'ALL'),
+      preferredProviders: Array.from(prefProviders),
+      preferredHousingTypes: Array.from(prefHousingTypes),
+      preferredMinPyeong: prefMinPyeong,
+      preferredMaxPyeong: prefMaxPyeong,
+      preferredMaxDeposit: prefMaxDeposit,
+      preferredMaxMonthlyRent: prefMaxMonthlyRent
     };
     onUpdateProfile(updated);
     setIsEditProfileOpen(false);
+  };
+
+  const confirmLogout = () => {
+    const isConfirmed = window.confirm('정말 로그아웃 하시겠습니까?');
+    if (isConfirmed) {
+      onLogout();
+    }
   };
 
   // Get active Sigungu options based on selected Sido
@@ -321,411 +412,101 @@ export default function Dashboard({
         </span>
       </div>
 
+      {/* Dashboard Top Navigation Tabs */}
+      <div className="dashboard-tabs">
+        <button
+          onClick={() => setActiveTab('search')}
+          className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
+        >
+          매물 검색
+        </button>
+        <button
+          onClick={() => setActiveTab('bookmarks')}
+          className={`tab-button ${activeTab === 'bookmarks' ? 'active' : ''}`}
+        >
+          관심 공고 ({bookmarks.length})
+        </button>
+      </div>
+
       {/* Search and Filters Section */}
-      <div style={{
-        padding: '18px 20px',
-        borderBottom: '1px solid var(--border-light)',
-        backgroundColor: 'var(--bg-secondary)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px',
-        maxHeight: '65%',
-        overflowY: 'auto'
-      }}>
-        {/* Auth / Personalization Section */}
-        {currentUser === null ? (
-          <div style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px 14px',
-            border: '1px solid var(--border-light)'
-          }}>
-            <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {activeTab === 'search' && (
+        <div style={{
+          padding: '18px 20px',
+          borderBottom: '1px solid var(--border-light)',
+          backgroundColor: 'var(--bg-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px',
+          maxHeight: '65%',
+          overflowY: 'auto'
+        }}>
+          {/* Auth / Personalization Section */}
+          {currentUser === null ? (
+            <div style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderRadius: 'var(--radius-md)',
+              padding: '12px 14px',
+              border: '1px solid var(--border-light)'
+            }}>
+              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>개인 맞춤 설정</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>로그인/회원가입</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="사용자명 입력..."
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    style={{ height: '32px', fontSize: '0.75rem', padding: '0 8px' }}
+                  />
+                  <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: '32px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)' }}>
+                    확인
+                  </button>
+                </div>
+                <p style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: '1.3', margin: 0 }}>
+                  ※ 이름 입력 시 기존에 저장된 선호지역, 거주기간 등 개인화 설정이 자동으로 로드됩니다.
+                </p>
+              </form>
+            </div>
+          ) : (
+            <div style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderRadius: 'var(--radius-md)',
+              padding: '14px 16px',
+              border: '1.5px solid var(--primary-light)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>개인 맞춤 설정</span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>로그인/회원가입</span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="사용자명 입력..."
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  style={{ height: '32px', fontSize: '0.75rem', padding: '0 8px' }}
-                />
-                <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: '32px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)' }}>
-                  확인
+                <span style={{ fontSize: '0.8rem', fontWeight: 850, color: 'var(--primary)' }}>
+                  {currentUser}님의 맞춤 프로필
+                </span>
+                <button 
+                  onClick={confirmLogout} 
+                  style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  로그아웃
                 </button>
               </div>
-              <p style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: '1.3', margin: 0 }}>
-                ※ 이름 입력 시 기존에 저장된 선호지역, 거주기간 등 개인화 설정이 자동으로 로드됩니다.
-              </p>
-            </form>
-          </div>
-        ) : (
-          <div style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px 14px',
-            border: '1.5px solid var(--primary-light)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)' }}>
-                {currentUser}님의 맞춤 프로필
-              </span>
-              <button 
-                onClick={onLogout} 
-                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}
-              >
-                로그아웃
-              </button>
-            </div>
 
-            {!isEditProfileOpen ? (
               <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div><strong>거주지:</strong> {userProfile?.currentRegion === 'ALL' ? '전국' : userProfile?.currentRegion} ({userProfile?.residenceYears || 0}년 거주)</div>
                 <div><strong>선호 지역:</strong> {userProfile?.preferredRegions && userProfile.preferredRegions.length > 0 ? userProfile.preferredRegions.join(', ') : '미지정'}</div>
                 <div><strong>나이:</strong> {userProfile?.age ? `${userProfile.age}세` : '미입력'}</div>
                 <button 
-                  onClick={() => {
-                    if (userProfile) {
-                      const parsedCurrent = parseProfileRegion(userProfile.currentRegion);
-                      setCurrentSido(parsedCurrent.sido);
-                      setCurrentSigungu(parsedCurrent.sigungu);
-                      setCurrentGu(parsedCurrent.gu);
-                      
-                      setResidenceYearsInput(userProfile.residenceYears);
-                      setAgeInput(userProfile.age);
-                      
-                      const parsedPref1 = parseProfileRegion(userProfile.preferredRegions[0]);
-                      setPrefSido1(parsedPref1.sido);
-                      setPrefSigungu1(parsedPref1.sigungu);
-                      setPrefGu1(parsedPref1.gu);
-                      
-                      const parsedPref2 = parseProfileRegion(userProfile.preferredRegions[1]);
-                      setPrefSido2(parsedPref2.sido);
-                      setPrefSigungu2(parsedPref2.sigungu);
-                      setPrefGu2(parsedPref2.gu);
-                    }
-                    setIsEditProfileOpen(true);
-                  }}
+                  onClick={openEditProfile}
                   className="btn btn-secondary"
-                  style={{ padding: '4px 10px', fontSize: '0.72rem', marginTop: '4px', width: '100%', height: '28px', borderRadius: '4px' }}
+                  style={{ padding: '4px 10px', fontSize: '0.72rem', marginTop: '6px', width: '100%', height: '28px', borderRadius: '4px' }}
                 >
-                  설정 수정하기
+                  프로필 수정 및 상세 조건 설정
                 </button>
               </div>
-            ) : (
-              <form onSubmit={handleProfileSave} style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--border-light)', paddingTop: '8px' }}>
-                
-                {/* 1. 현재 거주지 (3단계) */}
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>현재 거주지</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '4px', marginBottom: '6px' }}>
-                    <select 
-                      className="form-input" 
-                      value={currentSido} 
-                      onChange={(e) => {
-                        setCurrentSido(e.target.value);
-                        setCurrentSigungu('ALL');
-                        setCurrentGu('ALL');
-                      }}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">도 전체</option>
-                      {regionHierarchy.map(r => (
-                        <option key={r.sido} value={r.sido}>{r.sido}</option>
-                      ))}
-                    </select>
-                    
-                    <select 
-                      className="form-input" 
-                      value={currentSigungu} 
-                      disabled={currentSido === 'ALL'}
-                      onChange={(e) => {
-                        setCurrentSigungu(e.target.value);
-                        setCurrentGu('ALL');
-                      }}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">시·군·구</option>
-                      {(regionHierarchy.find(r => r.sido === currentSido)?.sigunguList || []).map(s => (
-                        <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
-                      ))}
-                    </select>
-                    
-                    <select 
-                      className="form-input" 
-                      value={currentGu} 
-                      disabled={
-                        currentSigungu === 'ALL' || 
-                        ((regionHierarchy.find(r => r.sido === currentSido)?.sigunguList.find(s => s.sigungu === currentSigungu))?.guList.length || 0) === 0
-                      }
-                      onChange={(e) => setCurrentGu(e.target.value)}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">구/읍 전체</option>
-                      {((regionHierarchy.find(r => r.sido === currentSido)?.sigunguList.find(s => s.sigungu === currentSigungu))?.guList || []).map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* 거주 년수 & 나이 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>거주 년수</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      min="0"
-                      value={residenceYearsInput} 
-                      onChange={(e) => setResidenceYearsInput(Number(e.target.value))}
-                      style={{ height: '28px', fontSize: '0.72rem', padding: '0 6px' }}
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>나이 (선택)</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      placeholder="예: 25"
-                      min="0"
-                      value={ageInput} 
-                      onChange={(e) => setAgeInput(e.target.value)}
-                      style={{ height: '28px', fontSize: '0.72rem', padding: '0 6px' }}
-                    />
-                  </div>
-                </div>
-
-                {/* 2. 선호지역 1 (3단계) */}
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>선호지역 1</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '4px' }}>
-                    <select 
-                      className="form-input" 
-                      value={prefSido1} 
-                      onChange={(e) => {
-                        setPrefSido1(e.target.value);
-                        setPrefSigungu1('ALL');
-                        setPrefGu1('ALL');
-                      }}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">도 전체</option>
-                      {regionHierarchy.map(r => (
-                        <option key={r.sido} value={r.sido}>{r.sido}</option>
-                      ))}
-                    </select>
-                    
-                    <select 
-                      className="form-input" 
-                      value={prefSigungu1} 
-                      disabled={prefSido1 === 'ALL'}
-                      onChange={(e) => {
-                        setPrefSigungu1(e.target.value);
-                        setPrefGu1('ALL');
-                      }}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">시·군·구</option>
-                      {(regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList || []).map(s => (
-                        <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
-                      ))}
-                    </select>
-                    
-                    <select 
-                      className="form-input" 
-                      value={prefGu1} 
-                      disabled={
-                        prefSigungu1 === 'ALL' || 
-                        ((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList.length || 0) === 0
-                      }
-                      onChange={(e) => setPrefGu1(e.target.value)}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">구/읍 전체</option>
-                      {((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList || []).map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* 3. 선호지역 2 (3단계) */}
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>선호지역 2</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '4px' }}>
-                    <select 
-                      className="form-input" 
-                      value={prefSido2} 
-                      onChange={(e) => {
-                        setPrefSido2(e.target.value);
-                        setPrefSigungu2('ALL');
-                        setPrefGu2('ALL');
-                      }}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">도 전체</option>
-                      {regionHierarchy.map(r => (
-                        <option key={r.sido} value={r.sido}>{r.sido}</option>
-                      ))}
-                    </select>
-                    
-                    <select 
-                      className="form-input" 
-                      value={prefSigungu2} 
-                      disabled={prefSido2 === 'ALL'}
-                      onChange={(e) => {
-                        setPrefSigungu2(e.target.value);
-                        setPrefGu2('ALL');
-                      }}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">시·군·구</option>
-                      {(regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList || []).map(s => (
-                        <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
-                      ))}
-                    </select>
-                    
-                    <select 
-                      className="form-input" 
-                      value={prefGu2} 
-                      disabled={
-                        prefSigungu2 === 'ALL' || 
-                        ((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList.length || 0) === 0
-                      }
-                      onChange={(e) => setPrefGu2(e.target.value)}
-                      style={{ height: '28px', fontSize: '0.7rem', padding: '0 2px', cursor: 'pointer' }}
-                    >
-                      <option value="ALL">구/읍 전체</option>
-                      {((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList || []).map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <p style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', lineHeight: '1.3', margin: '4px 0' }}>
-                  * 입력하신 나이 등 모든 개인 정보는 기기에만 안전하게 저장되며, 수집 목적이 아닌 맞춤형 청약 추천 용도로만 활용됩니다. 비워둘 수 있습니다.
-                </p>
-
-                <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                  <button type="button" onClick={() => setIsEditProfileOpen(false)} className="btn btn-secondary" style={{ flex: 1, height: '28px', fontSize: '0.72rem', padding: 0 }}>
-                    취소
-                  </button>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '28px', fontSize: '0.72rem', padding: 0 }}>
-                    저장하기
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
-
-        {/* Bookmarks (찜 목록) Section */}
-        <div style={{
-          backgroundColor: 'var(--bg-secondary)',
-          border: '1px solid var(--border-light)',
-          borderRadius: 'var(--radius-md)',
-          overflow: 'hidden'
-        }}>
-          <button
-            onClick={() => setIsBookmarksOpen(!isBookmarksOpen)}
-            style={{
-              width: '100%',
-              padding: '10px 14px',
-              backgroundColor: 'var(--bg-tertiary)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              color: 'var(--text-primary)'
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '15px', height: '15px', color: '#ef4444' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-              </svg>
-              관심 공고 ({bookmarks.length}개)
-            </span>
-            <span style={{ fontSize: '0.7rem' }}>{isBookmarksOpen ? '▲' : '▼'}</span>
-          </button>
-          
-          {isBookmarksOpen && (
-            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-              {bookmarks.length === 0 ? (
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '12px 0' }}>
-                  관심 공고가 없습니다.<br />매물 목록의 하트 아이콘을 클릭하여 추가해 보세요.
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed var(--border-light)', paddingBottom: '6px' }}>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>모집 상태 전환 테스트</span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSimulateStatusChange();
-                      }}
-                      className="btn btn-primary"
-                      style={{ padding: '2px 8px', fontSize: '0.65rem', height: '22px', borderRadius: '4px' }}
-                    >
-                      모집상태 변경 시뮬레이션
-                    </button>
-                  </div>
-                  
-                  {bookmarks.map(item => (
-                    <div 
-                      key={item.id}
-                      onClick={() => onSelectUnit(item.id)}
-                      style={{
-                        padding: '8px 10px',
-                        backgroundColor: 'var(--bg-primary)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-light)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '0.72rem',
-                        transition: 'border-color 0.15s'
-                      }}
-                      className="hover-scale"
-                    >
-                      <div style={{ flex: 1, minWidth: 0, paddingRight: '8px' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {item.unitName}
-                        </div>
-                        <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>
-                          마감: {item.deadlineDate} ({item.status})
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleBookmark(item);
-                        }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#ef4444" style={{ width: '15px', height: '15px' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </>
-              )}
             </div>
           )}
-        </div>
 
         {/* Target Recommendation Category Presets */}
         <div>
@@ -1050,6 +831,34 @@ export default function Dashboard({
           </select>
         </div>
       </div>
+      )}
+
+      {/* Bookmarks (찜 목록) Tab Header & Simulation */}
+      {activeTab === 'bookmarks' && (
+        <div style={{
+          padding: '18px 20px',
+          borderBottom: '1px solid var(--border-light)',
+          backgroundColor: 'var(--bg-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>관심 등록 공고 목록</span>
+            <button 
+              onClick={onSimulateStatusChange}
+              className="btn btn-primary"
+              style={{ padding: '6px 12px', fontSize: '0.72rem', height: '30px', borderRadius: 'var(--radius-sm)' }}
+            >
+              모집상태 변경 시뮬레이션
+            </button>
+          </div>
+          <p style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+            찜한 공고의 청약 접수 상태가 실시간으로 변동될 때 브라우저 및 시스템 알림이 발생하는 과정을 테스트할 수 있습니다.
+          </p>
+        </div>
+      )}
 
       {/* Result Count and Announcement List */}
       <div style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg-primary)' }}>
@@ -1061,9 +870,16 @@ export default function Dashboard({
           borderBottom: '1px solid var(--border-light)',
           display: 'flex',
           justifyContent: 'space-between',
-          backgroundColor: 'var(--bg-secondary)'
+          backgroundColor: 'var(--bg-secondary)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 4
         }}>
-          <span>검색 매물: <strong>{filteredUnits.length}</strong>개 주택</span>
+          {activeTab === 'search' ? (
+            <span>검색 매물: <strong>{filteredUnits.length}</strong>개 주택</span>
+          ) : (
+            <span>관심 매물: <strong>{bookmarks.length}</strong>개 주택</span>
+          )}
           {selectedUnitId && (
             <button
               onClick={() => onSelectUnit(null)}
@@ -1074,189 +890,540 @@ export default function Dashboard({
           )}
         </div>
 
-        {filteredUnits.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              style={{ width: '40px', height: '40px', marginBottom: '12px', opacity: 0.5 }}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-            </svg>
-            <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>일치하는 매물이 없습니다.</p>
-            <p style={{ fontSize: '0.72rem', marginTop: '4px' }}>지역 또는 평수/가격 필터 제한을 늘려보세요.</p>
-          </div>
-        ) : (
-          filteredUnits.map((unit) => {
-            const isSelected = unit.id === selectedUnitId;
-
-            return (
-              <div
-                key={unit.id}
-                onClick={() => onSelectUnit(unit.id)}
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid var(--border-light)',
-                  backgroundColor: isSelected ? 'var(--primary-light)' : 'var(--bg-secondary)',
-                  borderLeft: isSelected ? '4px solid var(--primary)' : '4px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  position: 'relative'
-                }}
-                className={!isSelected ? 'hover-scale' : ''}
+        {activeTab === 'search' ? (
+          filteredUnits.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                style={{ width: '40px', height: '40px', marginBottom: '12px', opacity: 0.5, display: 'inline-block' }}
               >
-                {/* Badges */}
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  {/* Heart bookmark toggle */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleBookmark(unit);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.1s'
-                    }}
-                    title="관심 등록"
-                    className="hover-scale"
-                  >
-                    {bookmarks.some(b => b.id === unit.id) ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#ef4444" style={{ width: '16px', height: '16px' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '16px', height: '16px', color: 'var(--text-tertiary)' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                      </svg>
-                    )}
-                  </button>
-
-                  <span className={getProviderBadgeClass(unit.provider)}>
-                    {unit.provider === 'PRIVATE' ? '민간' : unit.provider}
-                  </span>
-                  <span className="badge" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontSize: '0.65rem' }}>
-                    {unit.housingType}
-                  </span>
-                  <span className={`badge ${unit.status === '모집중' ? 'badge-active' : 'badge-closed'}`} style={{ fontSize: '0.65rem' }}>
-                    {unit.status}
-                  </span>
-
-                  {/* Recommendation Rank Badge */}
-                  {currentUser && unit.score !== undefined && unit.score > 0 && (
-                    <span className="badge" style={{ backgroundColor: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 800 }}>
-                      추천 {filteredUnits.indexOf(unit) + 1}순위
-                    </span>
-                  )}
-                  
-                  {/* Pyeong size highlighted */}
-                  <span className="badge" style={{ marginLeft: 'auto', backgroundColor: 'var(--primary)', color: '#ffffff', fontWeight: 700, fontSize: '0.65rem' }}>
-                    {unit.pyeongSize}평 ({unit.exclusiveArea}㎡)
-                  </span>
-                </div>
-
-                {/* Main House Unit Name */}
-                <h3 style={{
-                  fontSize: '0.92rem',
-                  fontWeight: 800,
-                  lineHeight: '1.4',
-                  color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
-                  marginBottom: '4px'
-                }}>
-                  {unit.unitName}
-                </h3>
-
-                {/* Parent Announcement Title */}
-                <p style={{
-                  fontSize: '0.72rem',
-                  color: 'var(--text-tertiary)',
-                  marginBottom: '8px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {unit.announcementTitle}
-                </p>
-
-                {/* Address */}
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '13px', height: '13px' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                  </svg>
-                  {unit.address}
-                </p>
-
-                {/* Price Details */}
-                <div style={{
-                  backgroundColor: isSelected ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.76rem',
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '3px',
-                  border: '1px solid var(--border-light)',
-                  marginBottom: '10px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>기본 보증금</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{formatPrice(unit.deposit)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>기본 월세</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{formatPrice(unit.monthlyRent)}</strong>
-                  </div>
-                </div>
-
-                {/* Card Action footer (Direct Apply) */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
-                    마감: {unit.deadlineDate}
-                  </span>
-                  
-                  {/* Prevent click bubbling to card selection */}
-                  <a
-                    href={unit.applyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      padding: '4px 10px',
-                      backgroundColor: 'var(--primary)',
-                      color: '#ffffff',
-                      textDecoration: 'none',
-                      borderRadius: '4px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      boxShadow: 'var(--shadow-sm)',
-                      transition: 'background-color 0.2s'
-                    }}
-                    className="hover-opacity"
-                  >
-                    신청 접수
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '10px', height: '10px' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            );
-          })
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+              <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>일치하는 매물이 없습니다.</p>
+              <p style={{ fontSize: '0.72rem', marginTop: '4px' }}>지역 또는 평수/가격 필터 제한을 늘려보세요.</p>
+            </div>
+          ) : (
+            filteredUnits.map((unit) => renderUnitCard(unit, true))
+          )
+        ) : (
+          bookmarks.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                style={{ width: '40px', height: '40px', marginBottom: '12px', opacity: 0.5, display: 'inline-block' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+              <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>관심 등록한 공고가 없습니다.</p>
+              <p style={{ fontSize: '0.72rem', marginTop: '4px' }}>매물 검색 목록의 하트 아이콘을 클릭하여 추가해 보세요.</p>
+            </div>
+          ) : (
+            bookmarks.map((unit) => renderUnitCard(unit, false))
+          )
         )}
       </div>
+
+      {/* EXTENDED PERSONALIZATION SETUP MODAL */}
+      {isEditProfileOpen && (
+        <div className="modal-overlay" onClick={() => setIsEditProfileOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>맞춤 프로필 및 상세 조건 설정</h2>
+              <button
+                type="button"
+                onClick={() => setIsEditProfileOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 700 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleProfileSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* 현재 거주지 (3단계) */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>현재 거주지</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
+                  <select 
+                    className="form-input" 
+                    value={currentSido} 
+                    onChange={(e) => {
+                      setCurrentSido(e.target.value);
+                      setCurrentSigungu('ALL');
+                      setCurrentGu('ALL');
+                    }}
+                    style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                  >
+                    <option value="ALL">도 전체</option>
+                    {regionHierarchy.map(r => (
+                      <option key={r.sido} value={r.sido}>{r.sido}</option>
+                    ))}
+                  </select>
+                  
+                  <select 
+                    className="form-input" 
+                    value={currentSigungu} 
+                    disabled={currentSido === 'ALL'}
+                    onChange={(e) => {
+                      setCurrentSigungu(e.target.value);
+                      setCurrentGu('ALL');
+                    }}
+                    style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                  >
+                    <option value="ALL">시·군·구</option>
+                    {(regionHierarchy.find(r => r.sido === currentSido)?.sigunguList || []).map(s => (
+                      <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                    ))}
+                  </select>
+                  
+                  <select 
+                    className="form-input" 
+                    value={currentGu} 
+                    disabled={
+                      currentSigungu === 'ALL' || 
+                      ((regionHierarchy.find(r => r.sido === currentSido)?.sigunguList.find(s => s.sigungu === currentSigungu))?.guList.length || 0) === 0
+                    }
+                    onChange={(e) => setCurrentGu(e.target.value)}
+                    style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                  >
+                    <option value="ALL">구/읍 전체</option>
+                    {((regionHierarchy.find(r => r.sido === currentSido)?.sigunguList.find(s => s.sigungu === currentSigungu))?.guList || []).map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 거주 년수 & 나이 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>거주 년수</label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    min="0"
+                    value={residenceYearsInput || ''} 
+                    onChange={(e) => setResidenceYearsInput(Number(e.target.value))}
+                    style={{ height: '36px', fontSize: '0.8rem' }}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>나이 (선택)</label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    placeholder="예: 25"
+                    min="0"
+                    value={ageInput} 
+                    onChange={(e) => setAgeInput(e.target.value)}
+                    style={{ height: '36px', fontSize: '0.8rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* 선호지역 1 & 2 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>선호지역 1</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
+                    <select 
+                      className="form-input" 
+                      value={prefSido1} 
+                      onChange={(e) => {
+                        setPrefSido1(e.target.value);
+                        setPrefSigungu1('ALL');
+                        setPrefGu1('ALL');
+                      }}
+                      style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">도 전체</option>
+                      {regionHierarchy.map(r => (
+                        <option key={r.sido} value={r.sido}>{r.sido}</option>
+                      ))}
+                    </select>
+                    
+                    <select 
+                      className="form-input" 
+                      value={prefSigungu1} 
+                      disabled={prefSido1 === 'ALL'}
+                      onChange={(e) => {
+                        setPrefSigungu1(e.target.value);
+                        setPrefGu1('ALL');
+                      }}
+                      style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">시·군·구</option>
+                      {(regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList || []).map(s => (
+                        <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                      ))}
+                    </select>
+                    
+                    <select 
+                      className="form-input" 
+                      value={prefGu1} 
+                      disabled={
+                        prefSigungu1 === 'ALL' || 
+                        ((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList.length || 0) === 0
+                      }
+                      onChange={(e) => setPrefGu1(e.target.value)}
+                      style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">구/읍 전체</option>
+                      {((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList || []).map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>선호지역 2</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
+                    <select 
+                      className="form-input" 
+                      value={prefSido2} 
+                      onChange={(e) => {
+                        setPrefSido2(e.target.value);
+                        setPrefSigungu2('ALL');
+                        setPrefGu2('ALL');
+                      }}
+                      style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">도 전체</option>
+                      {regionHierarchy.map(r => (
+                        <option key={r.sido} value={r.sido}>{r.sido}</option>
+                      ))}
+                    </select>
+                    
+                    <select 
+                      className="form-input" 
+                      value={prefSigungu2} 
+                      disabled={prefSido2 === 'ALL'}
+                      onChange={(e) => {
+                        setPrefSigungu2(e.target.value);
+                        setPrefGu2('ALL');
+                      }}
+                      style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">시·군·구</option>
+                      {(regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList || []).map(s => (
+                        <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                      ))}
+                    </select>
+                    
+                    <select 
+                      className="form-input" 
+                      value={prefGu2} 
+                      disabled={
+                        prefSigungu2 === 'ALL' || 
+                        ((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList.length || 0) === 0
+                      }
+                      onChange={(e) => setPrefGu2(e.target.value)}
+                      style={{ height: '36px', fontSize: '0.78rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">구/읍 전체</option>
+                      {((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList || []).map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 선호 공급 주체 */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>선호 공급 주체 (중복 선택)</label>
+                <div style={{ display: 'flex', gap: '16px', padding: '4px 0' }}>
+                  {(['LH', 'SH', 'PRIVATE'] as ProviderType[]).map(prov => {
+                    const active = prefProviders.has(prov);
+                    return (
+                      <label key={prov} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', cursor: 'pointer', userSelect: 'none', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        <input
+                          type="checkbox"
+                          checked={active}
+                          onChange={() => {
+                            const next = new Set(prefProviders);
+                            if (next.has(prov)) {
+                              if (next.size > 1) next.delete(prov);
+                            } else {
+                              next.add(prov);
+                            }
+                            setPrefProviders(next);
+                          }}
+                          style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                        />
+                        {prov === 'PRIVATE' ? '민간임대' : prov}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 선호 주택 유형 */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>선호 주택 유형 (중복 선택)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', maxHeight: '110px', overflowY: 'auto', padding: '8px', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-primary)' }}>
+                  {(['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운'] as HousingType[]).map(type => {
+                    const active = prefHousingTypes.has(type);
+                    return (
+                      <label key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', cursor: 'pointer', userSelect: 'none', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                        <input
+                          type="checkbox"
+                          checked={active}
+                          onChange={() => {
+                            const next = new Set(prefHousingTypes);
+                            if (next.has(type)) {
+                              if (next.size > 1) next.delete(type);
+                            } else {
+                              next.add(type);
+                            }
+                            setPrefHousingTypes(next);
+                          }}
+                          style={{ cursor: 'pointer', width: '14px', height: '14px' }}
+                        />
+                        {type}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 선호 평형 범위 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>최소 평형</label>
+                  <select
+                    className="form-input"
+                    value={prefMinPyeong}
+                    onChange={(e) => setPrefMinPyeong(Number(e.target.value))}
+                    style={{ height: '36px', fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    {[0, 5, 10, 15, 20, 25, 30, 35, 40].map(p => (
+                      <option key={p} value={p}>{p}평</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>최대 평형</label>
+                  <select
+                    className="form-input"
+                    value={prefMaxPyeong}
+                    onChange={(e) => setPrefMaxPyeong(Number(e.target.value))}
+                    style={{ height: '36px', fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    {[5, 10, 15, 20, 25, 30, 35, 40, 45].map(p => (
+                      <option key={p} value={p}>{p === 45 ? '무제한' : `${p}평`}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 가격 한도 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>최대 보증금 한도</label>
+                  <select
+                    className="form-input"
+                    value={prefMaxDeposit}
+                    onChange={(e) => setPrefMaxDeposit(Number(e.target.value))}
+                    style={{ height: '36px', fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    {[10000000, 20000000, 50000000, 100000000, 200000000, 300000000, 500000000, 800000000].map(d => (
+                      <option key={d} value={d}>{d === 800000000 ? '무제한' : formatPrice(d)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>최대 월 임대료 한도</label>
+                  <select
+                    className="form-input"
+                    value={prefMaxMonthlyRent}
+                    onChange={(e) => setPrefMaxMonthlyRent(Number(e.target.value))}
+                    style={{ height: '36px', fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    {[100000, 200000, 300000, 500000, 800000, 1200000, 1500000, 2000000].map(r => (
+                      <option key={r} value={r}>{r === 2000000 ? '무제한' : formatPrice(r)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="btn btn-secondary" style={{ flex: 1, height: '40px' }}>
+                  취소
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '40px' }}>
+                  저장하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
+
+  // Reusable Unit Card block layout renderer
+  function renderUnitCard(unit: FlatHouseUnit & { score?: number }, showRank: boolean) {
+    const isSelected = unit.id === selectedUnitId;
+    return (
+      <div
+        key={unit.id}
+        onClick={() => onSelectUnit(unit.id)}
+        className={`house-card ${isSelected ? 'selected' : ''}`}
+      >
+        {/* Badges */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Heart bookmark toggle */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleBookmark(unit);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.1s'
+            }}
+            title="관심 등록"
+            className="hover-scale"
+          >
+            {bookmarks.some(b => b.id === unit.id) ? (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#ef4444" style={{ width: '16px', height: '16px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '16px', height: '16px', color: 'var(--text-tertiary)' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+            )}
+          </button>
+
+          <span className={getProviderBadgeClass(unit.provider)}>
+            {unit.provider === 'PRIVATE' ? '민간' : unit.provider}
+          </span>
+          <span className="badge" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontSize: '0.65rem' }}>
+            {unit.housingType}
+          </span>
+          <span className={`badge ${unit.status === '모집중' ? 'badge-active' : 'badge-closed'}`} style={{ fontSize: '0.65rem' }}>
+            {unit.status}
+          </span>
+
+          {/* Recommendation Rank Badge */}
+          {showRank && currentUser && unit.score !== undefined && unit.score > 0 && (
+            <span className="badge" style={{ backgroundColor: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 800 }}>
+              추천 {filteredUnits.findIndex(fu => fu.id === unit.id) + 1}순위
+            </span>
+          )}
+          
+          {/* Pyeong size highlighted */}
+          <span className="badge" style={{ marginLeft: 'auto', backgroundColor: 'var(--primary)', color: '#ffffff', fontWeight: 700, fontSize: '0.65rem' }}>
+            {unit.pyeongSize}평 ({unit.exclusiveArea}㎡)
+          </span>
+        </div>
+
+        {/* Main House Unit Name */}
+        <h3 style={{
+          fontSize: '0.92rem',
+          fontWeight: 800,
+          lineHeight: '1.4',
+          color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
+          marginBottom: '4px'
+        }}>
+          {unit.unitName}
+        </h3>
+
+        {/* Parent Announcement Title */}
+        <p style={{
+          fontSize: '0.72rem',
+          color: 'var(--text-tertiary)',
+          marginBottom: '8px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          {unit.announcementTitle}
+        </p>
+
+        {/* Address */}
+        <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '13px', height: '13px' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+          {unit.address}
+        </p>
+
+        {/* Price Details */}
+        <div style={{
+          backgroundColor: isSelected ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+          padding: '8px 12px',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '0.76rem',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '3px',
+          border: '1px solid var(--border-light)',
+          marginBottom: '10px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>기본 보증금</span>
+            <strong style={{ color: 'var(--text-primary)' }}>{formatPrice(unit.deposit)}</strong>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>기본 월세</span>
+            <strong style={{ color: 'var(--text-primary)' }}>{formatPrice(unit.monthlyRent)}</strong>
+          </div>
+        </div>
+
+        {/* Card Action footer (Direct Apply) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
+            마감: {unit.deadlineDate}
+          </span>
+          
+          {/* Prevent click bubbling to card selection */}
+          <a
+            href={unit.applyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              padding: '4px 10px',
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'background-color 0.2s'
+            }}
+            className="hover-opacity"
+          >
+            신청 접수
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '10px', height: '10px' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    );
+  }
 }

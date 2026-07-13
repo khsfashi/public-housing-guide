@@ -84,5 +84,11 @@ export interface UserProfileData {
   residenceYears: number;
   age: string;
   preferredRegions: string[];
+  preferredProviders?: ProviderType[];
+  preferredHousingTypes?: HousingType[];
+  preferredMinPyeong?: number;
+  preferredMaxPyeong?: number;
+  preferredMaxDeposit?: number;
+  preferredMaxMonthlyRent?: number;
 }
 

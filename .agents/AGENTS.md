@@ -50,3 +50,30 @@
 3. **사용자 알림 및 마이페이지**
    - 본인이 희망하는 지역/보증금/평형대의 공고가 올라왔을 때 카카오톡 알림톡 혹은 이메일로 알림을 보내주는 구독형 알림 서비스 연동.
    - 찜한 공고 리스트를 관리할 수 있는 가벼운 Firebase 혹은 Supabase 데이터베이스 및 사용자 로그인 연동.
+
+---
+
+## 🚀 GitHub Commit & Workflow Rules
+
+1. **Commit Message Convention**:
+   - Use standardized prefixes for commit messages:
+     - `feat:` for new features or data layers.
+     - `fix:` for bug fixes or filtering corrections.
+     - `refactor:` for code restructurings or layout cleanups.
+     - `docs:` for markdown updates.
+     - `style:` for CSS adjustments.
+   - Example: `feat: Implement flat unit search, cascading regions, price/pyeong filters, and direct apply links`
+
+2. **Pre-Commit Verification**:
+   - Always run local compile checks (`npm run build` or similar validation task) before committing. Never commit code that breaks TypeScript types or production bundles.
+
+3. **Remote Synchronization**:
+   - Once a set of tasks is successfully verified and committed locally, push the changes to the remote repository (`origin/main`) to maintain team synchronization.
+
+## 📝 Documentation & UI Formatting Constraints
+
+1. **Strictly Prohibit Redundant Expressions (Same Meaning Repetitions)**:
+   - Never write redundant terms representing the exact same meaning side-by-side (e.g., avoid "시작하기 (Getting Started)", "전설의 레전드", "역전의 역전"). Use one clean representation (preferably English for technical titles, such as simply "Getting Started" or "Setup").
+   
+2. **Minimize Emojis & Childish Embellishments**:
+   - Do not use colorful or excessive emojis (e.g., 🚀, 🟢, 💡, 📍, 📋) in the UI code, documentation, or response messages. Maintain a professional, clean, and premium typography-oriented look.
