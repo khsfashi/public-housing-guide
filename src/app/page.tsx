@@ -8,11 +8,22 @@ import DetailView from '../components/DetailView';
 import ComparePanel from '../components/ComparePanel';
 import ThemeToggle from '../components/ThemeToggle';
 
+export interface UserProfileData {
+  currentRegion: string;
+  residenceYears: number;
+  age: string;
+  preferredRegions: string[];
+}
+
 export default function Home() {
   // API Data States
   const [allUnits, setAllUnits] = useState<FlatHouseUnit[]>([]);
   const [apiMode, setApiMode] = useState<'live' | 'simulation'>('simulation');
   const [loading, setLoading] = useState(true);
+
+  // Resize States
+  const [sidebarWidth, setSidebarWidth] = useState(420);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Selection state (individual unit level)
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -44,6 +55,17 @@ export default function Home() {
   // Compare Cart State
   const [compareCart, setCompareCart] = useState<FlatHouseUnit[]>([]);
 
+  // Bookmarks State
+  const [bookmarks, setBookmarks] = useState<FlatHouseUnit[]>([]);
+
+  // Personalization User Profile State
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
+
+  // Alerts State
+  const [expiredCleanedAlert, setExpiredCleanedAlert] = useState<string | null>(null);
+  const [notificationAlert, setNotificationAlert] = useState<string | null>(null);
+
   // Fetch data on mount
   useEffect(() => {
     async function fetchData() {
@@ -61,7 +83,110 @@ export default function Home() {
       }
     }
     fetchData();
+
+    // Load active session on mount
+    const lastUser = localStorage.getItem('housing_hub_current_user');
+    if (lastUser) {
+      setCurrentUser(lastUser);
+    } else {
+      // Load global bookmarks on mount
+      const storedBookmarks = localStorage.getItem('housing_hub_bookmarks_global');
+      if (storedBookmarks) {
+        try {
+          const loaded: FlatHouseUnit[] = JSON.parse(storedBookmarks);
+          const todayStr = new Date().toISOString().split('T')[0];
+          const valid = loaded.filter(b => b.deadlineDate >= todayStr);
+          if (valid.length < loaded.length) {
+            const expiredNames = loaded.filter(b => b.deadlineDate < todayStr).map(b => b.unitName).join(', ');
+            setExpiredCleanedAlert(`마감 기간이 지난 찜 공고 [${expiredNames}]가 목록에서 자동 정리되었습니다.`);
+          }
+          setBookmarks(valid);
+          localStorage.setItem('housing_hub_bookmarks_global', JSON.stringify(valid));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
   }, []);
+
+  // Handle profile and bookmark changes when user logs in or out
+  useEffect(() => {
+    if (currentUser) {
+      // Load user profile
+      const storedProfiles = localStorage.getItem('housing_hub_profiles');
+      if (storedProfiles) {
+        const profiles = JSON.parse(storedProfiles);
+        if (profiles[currentUser]) {
+          setUserProfile(profiles[currentUser]);
+        } else {
+          const defaultProfile: UserProfileData = {
+            currentRegion: 'ALL',
+            residenceYears: 0,
+            age: '',
+            preferredRegions: []
+          };
+          setUserProfile(defaultProfile);
+        }
+      } else {
+        const defaultProfile: UserProfileData = {
+          currentRegion: 'ALL',
+          residenceYears: 0,
+          age: '',
+          preferredRegions: []
+        };
+        setUserProfile(defaultProfile);
+      }
+
+      // Load user bookmarks
+      const storedBookmarks = localStorage.getItem(`housing_hub_bookmarks_${currentUser}`);
+      if (storedBookmarks) {
+        try {
+          const loaded: FlatHouseUnit[] = JSON.parse(storedBookmarks);
+          const todayStr = new Date().toISOString().split('T')[0];
+          const valid = loaded.filter(b => b.deadlineDate >= todayStr);
+          if (valid.length < loaded.length) {
+            const expiredNames = loaded.filter(b => b.deadlineDate < todayStr).map(b => b.unitName).join(', ');
+            setExpiredCleanedAlert(`마감 기간이 지난 찜 공고 [${expiredNames}]가 목록에서 자동 정리되었습니다.`);
+          }
+          setBookmarks(valid);
+          localStorage.setItem(`housing_hub_bookmarks_${currentUser}`, JSON.stringify(valid));
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setBookmarks([]);
+      }
+    } else {
+      setUserProfile(null);
+    }
+  }, [currentUser]);
+
+  // Sidebar drag handler
+  const startResizing = (mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(300, Math.min(800, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   // Toggle Provider selection helper
   const toggleProvider = (provider: ProviderType) => {
@@ -89,9 +214,153 @@ export default function Home() {
     setSelectedHousingTypes(newTypes);
   };
 
+  // Authentication Callbacks
+  const handleLogin = (username: string, profileData: UserProfileData) => {
+    setCurrentUser(username);
+    localStorage.setItem('housing_hub_current_user', username);
+    
+    const storedProfiles = localStorage.getItem('housing_hub_profiles');
+    const profiles = storedProfiles ? JSON.parse(storedProfiles) : {};
+    profiles[username] = profileData;
+    localStorage.setItem('housing_hub_profiles', JSON.stringify(profiles));
+    setUserProfile(profileData);
+    
+    // Default to recommendation sort when logging in
+    setSortBy('recommendation');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('housing_hub_current_user');
+    setUserProfile(null);
+    setSortBy('latest');
+  };
+
+  const handleUpdateProfile = (profileData: UserProfileData) => {
+    if (!currentUser) return;
+    setUserProfile(profileData);
+    const storedProfiles = localStorage.getItem('housing_hub_profiles');
+    const profiles = storedProfiles ? JSON.parse(storedProfiles) : {};
+    profiles[currentUser] = profileData;
+    localStorage.setItem('housing_hub_profiles', JSON.stringify(profiles));
+  };
+
+  // Toggle Bookmark
+  const handleToggleBookmark = (unit: FlatHouseUnit) => {
+    const isBookmarked = bookmarks.some(b => b.id === unit.id);
+    let updatedBookmarks;
+    if (isBookmarked) {
+      updatedBookmarks = bookmarks.filter(b => b.id !== unit.id);
+    } else {
+      updatedBookmarks = [...bookmarks, unit];
+    }
+    setBookmarks(updatedBookmarks);
+    
+    const key = currentUser ? `housing_hub_bookmarks_${currentUser}` : 'housing_hub_bookmarks_global';
+    localStorage.setItem(key, JSON.stringify(updatedBookmarks));
+  };
+
+  // Simulated Status Change & Web Notification
+  const handleSimulateStatusChange = () => {
+    if (bookmarks.length === 0) {
+      alert('시뮬레이션을 진행하려면 먼저 매물 목록에서 공고를 찜(하트 아이콘)해주세요!');
+      return;
+    }
+
+    const target = bookmarks[0];
+    const currentUnitState = allUnits.find(u => u.id === target.id);
+    if (!currentUnitState) return;
+
+    if (currentUnitState.status === '모집중') {
+      // Revert to '접수종료' first, then toggle back to '모집중' after 1.5 seconds to show status changed
+      setAllUnits(prev => prev.map(u => u.id === target.id ? { ...u, status: '접수종료' } : u));
+      alert(`[${target.unitName}]의 상태를 '접수종료'로 임시 변경했습니다. 1.5초 후 '모집중' 상태로 복원되면서 웹 알림이 발생합니다.`);
+      
+      setTimeout(() => {
+        setAllUnits(prev => prev.map(u => u.id === target.id ? { ...u, status: '모집중' } : u));
+        
+        const msg = `📢 찜한 공고 [${target.unitName}]의 상태가 '모집중'으로 전환되었습니다! 지금 신청할 수 있습니다.`;
+        setNotificationAlert(msg);
+        triggerBrowserNotification(msg);
+      }, 1500);
+    } else {
+      // Directly change to '모집중'
+      setAllUnits(prev => prev.map(u => u.id === target.id ? { ...u, status: '모집중' } : u));
+      
+      const msg = `📢 찜한 공고 [${target.unitName}]의 상태가 '모집중'으로 전환되었습니다! 지금 신청할 수 있습니다.`;
+      setNotificationAlert(msg);
+      triggerBrowserNotification(msg);
+    }
+  };
+
+  const triggerBrowserNotification = (msg: string) => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification('Housing Hub', { body: msg });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            new Notification('Housing Hub', { body: msg });
+          }
+        });
+      }
+    }
+  };
+
+  // Compute recommendation scores based on personalization
+  const scoredUnits = useMemo(() => {
+    return allUnits.map(unit => {
+      let score = 0;
+      if (currentUser && userProfile) {
+        const { currentRegion, residenceYears, age, preferredRegions } = userProfile;
+        
+        // 1. Current region match (highest priority)
+        if (currentRegion && currentRegion !== 'ALL' && unit.region.includes(currentRegion)) {
+          score += 1000;
+          // 2. Years of residence adds weight
+          score += (residenceYears || 0) * 100;
+        }
+        
+        // 3. Preferred regions match
+        if (preferredRegions && preferredRegions.length > 0) {
+          const matchPreferred = preferredRegions.some(pref => pref !== 'ALL' && unit.region.includes(pref));
+          if (matchPreferred) {
+            score += 500;
+          }
+        }
+        
+        // 4. Age match
+        if (age) {
+          const ageNum = parseInt(age, 10);
+          if (!isNaN(ageNum)) {
+            // Youth (청년): 19-39
+            if (ageNum >= 19 && ageNum <= 39) {
+              if (unit.unitName.includes('청년') || unit.unitName.includes('대학생') || unit.housingType === '행복주택') {
+                score += 300;
+              }
+            }
+            // Senior (고령자): 65+
+            if (ageNum >= 65) {
+              if (unit.unitName.includes('고령자') || unit.housingType === '영구임대') {
+                score += 300;
+              }
+            }
+            // Newlyweds (신혼부부): 20-45 (approx)
+            if (ageNum >= 20 && ageNum <= 45) {
+              if (unit.unitName.includes('신혼부부') || unit.housingType === '신혼희망타운') {
+                score += 300;
+              }
+            }
+          }
+        }
+      }
+      return { ...unit, score };
+    });
+  }, [allUnits, currentUser, userProfile]);
+
   // Filtered & Sorted Units
   const filteredUnits = useMemo(() => {
-    return allUnits
+    return scoredUnits
       .filter((unit) => {
         // 1. Search Query filter (unit name, announcement title, address, region)
         const matchSearch =
@@ -108,10 +377,8 @@ export default function Home() {
         if (!selectedHousingTypes.has(unit.housingType)) return false;
 
         // 4. Cascading Region filter
-        // Sido Match
         if (selectedSido !== 'ALL') {
           if (!unit.region.includes(selectedSido)) return false;
-          // Sigungu Match (only relevant if Sido is selected)
           if (selectedSigungu !== 'ALL' && !unit.region.includes(selectedSigungu)) {
             return false;
           }
@@ -137,6 +404,13 @@ export default function Home() {
         return true;
       })
       .sort((a, b) => {
+        if (sortBy === 'recommendation') {
+          // If recommendation score is identical, sub-sort by latest announcement
+          if (b.score === a.score) {
+            return new Date(b.announcementDate).getTime() - new Date(a.announcementDate).getTime();
+          }
+          return b.score - a.score;
+        }
         if (sortBy === 'latest') {
           return new Date(b.announcementDate).getTime() - new Date(a.announcementDate).getTime();
         }
@@ -155,7 +429,7 @@ export default function Home() {
         return 0;
       });
   }, [
-    allUnits,
+    scoredUnits,
     searchQuery,
     selectedProviders,
     selectedHousingTypes,
@@ -200,13 +474,60 @@ export default function Home() {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isDragging ? 'dragging' : ''}`}>
+      {/* Toast Alerts Container */}
+      {(expiredCleanedAlert || notificationAlert) && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '24px',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          maxWidth: '450px'
+        }}>
+          {expiredCleanedAlert && (
+            <div style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderLeft: '4px solid #f59e0b',
+              padding: '12px 18px',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-lg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>{expiredCleanedAlert}</span>
+              <button onClick={() => setExpiredCleanedAlert(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>✕</button>
+            </div>
+          )}
+          {notificationAlert && (
+            <div style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderLeft: '4px solid var(--primary)',
+              padding: '12px 18px',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-lg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>{notificationAlert}</span>
+              <button onClick={() => setNotificationAlert(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>✕</button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <header className="app-header">
         <div className="header-logo">
           <div className="logo-icon" style={{ display: 'none' }}></div>
           <div>
-            <span style={{ fontWeight: 800, letterSpacing: '-0.5px' }}>Rental Home Finder</span>
+            <span style={{ fontWeight: 800, letterSpacing: '-0.5px' }}>Housing Hub</span>
             <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginLeft: '10px' }}>
               LH / SH / Private Rental Condition Comparison
             </span>
@@ -221,7 +542,7 @@ export default function Home() {
       {/* Main Layout */}
       <main className="app-main">
         {/* Sidebar Filter & List */}
-        <section className="app-sidebar">
+        <section className="app-sidebar" style={{ width: sidebarWidth }}>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' }}>
               <div className="animate-pulse" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
@@ -258,9 +579,20 @@ export default function Home() {
               sortBy={sortBy}
               setSortBy={setSortBy}
               apiMode={apiMode}
+              bookmarks={bookmarks}
+              onToggleBookmark={handleToggleBookmark}
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              userProfile={userProfile}
+              onUpdateProfile={handleUpdateProfile}
+              onSimulateStatusChange={handleSimulateStatusChange}
             />
           )}
         </section>
+
+        {/* Dynamic Resize Splitter Handle */}
+        <div className="resize-handle" onMouseDown={startResizing} />
 
         {/* Map View */}
         <section className="app-map-area">
@@ -285,6 +617,10 @@ export default function Home() {
             onClose={() => setSelectedUnitId(null)}
             compareCart={compareCart}
             onToggleCompare={handleToggleCompare}
+            bookmarks={bookmarks}
+            onToggleBookmark={handleToggleBookmark}
+            currentUser={currentUser}
+            userProfile={userProfile}
           />
         </section>
       </main>

@@ -8,6 +8,15 @@ interface DetailViewProps {
   onClose: () => void;
   compareCart: FlatHouseUnit[];
   onToggleCompare: (unit: FlatHouseUnit) => void;
+  bookmarks: FlatHouseUnit[];
+  onToggleBookmark: (unit: FlatHouseUnit) => void;
+  currentUser: string | null;
+  userProfile: {
+    currentRegion: string;
+    residenceYears: number;
+    age: string;
+    preferredRegions: string[];
+  } | null;
 }
 
 export default function DetailView({
@@ -15,6 +24,10 @@ export default function DetailView({
   onClose,
   compareCart,
   onToggleCompare,
+  bookmarks,
+  onToggleBookmark,
+  currentUser,
+  userProfile,
 }: DetailViewProps) {
   const [customDeposit, setCustomDeposit] = useState<number>(0);
   const [areaUnit, setAreaUnit] = useState<'㎡' | '평'>('㎡');
@@ -71,6 +84,7 @@ export default function DetailView({
 
   const simulatedRent = calculateSimulatedRent();
   const isInCart = compareCart.some(c => c.id === unit.id);
+  const isBookmarked = bookmarks.some(b => b.id === unit.id);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
@@ -198,13 +212,29 @@ export default function DetailView({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>상세 임대 조건</span>
-            <button
-              onClick={() => onToggleCompare(unit)}
-              className={`btn ${isInCart ? 'btn-secondary' : 'btn-primary'}`}
-              style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: '12px' }}
-            >
-              {isInCart ? '비교 해제' : '비교 담기'}
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => onToggleBookmark(unit)}
+                className="btn btn-secondary"
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '0.75rem',
+                  borderRadius: '12px',
+                  borderColor: isBookmarked ? '#ef4444' : 'var(--border-medium)',
+                  color: isBookmarked ? '#ef4444' : 'var(--text-secondary)',
+                  backgroundColor: isBookmarked ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
+                }}
+              >
+                {isBookmarked ? '♥ 찜 해제' : '♡ 찜하기'}
+              </button>
+              <button
+                onClick={() => onToggleCompare(unit)}
+                className={`btn ${isInCart ? 'btn-secondary' : 'btn-primary'}`}
+                style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: '12px' }}
+              >
+                {isInCart ? '비교 해제' : '비교 담기'}
+              </button>
+            </div>
           </div>
 
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
@@ -230,6 +260,50 @@ export default function DetailView({
               <strong>월 임대료:</strong> {formatPrice(unit.monthlyRent)}
             </div>
           </div>
+
+          {/* Priority Score Analysis */}
+          {currentUser && userProfile && (
+            <div style={{
+              marginTop: '14px',
+              padding: '10px 12px',
+              backgroundColor: 'var(--primary-light)',
+              border: '1.2px dashed var(--primary)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.74rem',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.76rem' }}>💡 개인 청약 우선순위 분석</span>
+              <div>
+                • 거주지 매칭: {userProfile.currentRegion && unit.region.includes(userProfile.currentRegion) ? (
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>당해지역 거주자 (우선공급 대상)</span>
+                ) : (
+                  <span>타지역 거주자 (가점 없음)</span>
+                )}
+              </div>
+              {userProfile.currentRegion && unit.region.includes(userProfile.currentRegion) && (
+                <div>• 거주 년수 가점: {userProfile.residenceYears || 0}년 거주 중 (+{(userProfile.residenceYears || 0) * 100}점)</div>
+              )}
+              {userProfile.preferredRegions?.some(pr => unit.region.includes(pr)) && (
+                <div style={{ color: 'var(--primary)', fontWeight: 600 }}>• 선호지역 요건 만족 (+500점)</div>
+              )}
+              {userProfile.age && (() => {
+                const ageNum = parseInt(userProfile.age);
+                if (ageNum >= 19 && ageNum <= 39 && (unit.unitName.includes('청년') || unit.unitName.includes('대학생') || unit.housingType === '행복주택')) {
+                  return <div style={{ color: 'var(--primary)', fontWeight: 600 }}>• 청년 청약 대상자 연령 범위 (+300점)</div>;
+                }
+                if (ageNum >= 65 && (unit.unitName.includes('고령자') || unit.housingType === '영구임대')) {
+                  return <div style={{ color: 'var(--primary)', fontWeight: 600 }}>• 고령자 청약 대상자 연령 범위 (+300점)</div>;
+                }
+                if (ageNum >= 20 && ageNum <= 45 && (unit.unitName.includes('신혼부부') || unit.housingType === '신혼희망타운')) {
+                  return <div style={{ color: 'var(--primary)', fontWeight: 600 }}>• 신혼부부 청약 대상자 연령 범위 (+300점)</div>;
+                }
+                return null;
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Conversion Calculator Section */}

@@ -1,10 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { FlatHouseUnit, ProviderType, HousingType } from '../types';
 import { regionsData } from '../data/regions';
 
+export interface UserProfileData {
+  currentRegion: string;
+  residenceYears: number;
+  age: string;
+  preferredRegions: string[];
+}
+
 interface DashboardProps {
-  filteredUnits: FlatHouseUnit[];
+  filteredUnits: (FlatHouseUnit & { score?: number })[];
   selectedUnitId: string | null;
   onSelectUnit: (id: string | null) => void;
   
@@ -38,6 +46,20 @@ interface DashboardProps {
   sortBy: string;
   setSortBy: (val: string) => void;
   apiMode: 'live' | 'simulation';
+
+  // Bookmarks
+  bookmarks: FlatHouseUnit[];
+  onToggleBookmark: (unit: FlatHouseUnit) => void;
+
+  // Personalization & Auth
+  currentUser: string | null;
+  onLogin: (username: string, profile: UserProfileData) => void;
+  onLogout: () => void;
+  userProfile: UserProfileData | null;
+  onUpdateProfile: (profile: UserProfileData) => void;
+
+  // Simulation Controls
+  onSimulateStatusChange: () => void;
 }
 
 export default function Dashboard({
@@ -69,7 +91,28 @@ export default function Dashboard({
   sortBy,
   setSortBy,
   apiMode,
+  bookmarks,
+  onToggleBookmark,
+  currentUser,
+  onLogin,
+  onLogout,
+  userProfile,
+  onUpdateProfile,
+  onSimulateStatusChange,
 }: DashboardProps) {
+
+  // Local states for presets & login form
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+
+  // Local state for profile inputs (initialized from userProfile when edit opens)
+  const [currentRegionInput, setCurrentRegionInput] = useState('ALL');
+  const [residenceYearsInput, setResidenceYearsInput] = useState(0);
+  const [ageInput, setAgeInput] = useState('');
+  const [prefRegion1, setPrefRegion1] = useState('ALL');
+  const [prefRegion2, setPrefRegion2] = useState('ALL');
 
   // Formatter helpers
   const formatPrice = (val: number) => {
@@ -88,6 +131,108 @@ export default function Dashboard({
       case 'SH': return 'badge badge-sh';
       case 'PRIVATE': return 'badge badge-private';
     }
+  };
+
+  // Preset Recommendation Presets trigger
+  const applyPreset = (category: 'youth' | 'newlywed' | 'multichild' | 'senior') => {
+    if (activePreset === category) {
+      // Clear preset
+      setActivePreset(null);
+      setMinDeposit(0);
+      setMaxDeposit(800000000);
+      setMinMonthlyRent(0);
+      setMaxMonthlyRent(2000000);
+      setMinPyeong(0);
+      setMaxPyeong(45);
+      setSortBy(currentUser ? 'recommendation' : 'latest');
+      return;
+    }
+
+    setActivePreset(category);
+    if (category === 'youth') {
+      setMinDeposit(0);
+      setMaxDeposit(150000000);
+      setMinMonthlyRent(0);
+      setMaxMonthlyRent(400000);
+      setMinPyeong(0);
+      setMaxPyeong(15);
+      setSortBy(currentUser ? 'recommendation' : 'minDeposit');
+    } else if (category === 'newlywed') {
+      setMinDeposit(30000000);
+      setMaxDeposit(400000000);
+      setMinMonthlyRent(0);
+      setMaxMonthlyRent(800000);
+      setMinPyeong(12);
+      setMaxPyeong(30);
+      setSortBy(currentUser ? 'recommendation' : 'latest');
+    } else if (category === 'multichild') {
+      setMinDeposit(50000000);
+      setMaxDeposit(600000000);
+      setMinMonthlyRent(0);
+      setMaxMonthlyRent(1200000);
+      setMinPyeong(18);
+      setMaxPyeong(45);
+      setSortBy(currentUser ? 'recommendation' : 'latest');
+    } else if (category === 'senior') {
+      setMinDeposit(0);
+      setMaxDeposit(100000000);
+      setMinMonthlyRent(0);
+      setMaxMonthlyRent(300000);
+      setMinPyeong(0);
+      setMaxPyeong(18);
+      setSortBy(currentUser ? 'recommendation' : 'minRent');
+    }
+  };
+
+  // Auth Submit Handlers
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usernameInput.trim()) {
+      alert('사용자명을 입력해주세요.');
+      return;
+    }
+    const username = usernameInput.trim();
+    const storedProfiles = localStorage.getItem('housing_hub_profiles');
+    const profiles = storedProfiles ? JSON.parse(storedProfiles) : {};
+    
+    if (profiles[username]) {
+      const saved = profiles[username];
+      onLogin(username, saved);
+      setCurrentRegionInput(saved.currentRegion);
+      setResidenceYearsInput(saved.residenceYears);
+      setAgeInput(saved.age);
+      setPrefRegion1(saved.preferredRegions[0] || 'ALL');
+      setPrefRegion2(saved.preferredRegions[1] || 'ALL');
+      setIsEditProfileOpen(false);
+    } else {
+      const newProfile: UserProfileData = {
+        currentRegion: 'ALL',
+        residenceYears: 0,
+        age: '',
+        preferredRegions: []
+      };
+      onLogin(username, newProfile);
+      setCurrentRegionInput('ALL');
+      setResidenceYearsInput(0);
+      setAgeInput('');
+      setPrefRegion1('ALL');
+      setPrefRegion2('ALL');
+      setIsEditProfileOpen(true); // Open profile settings immediately for new signup
+    }
+    setUsernameInput('');
+  };
+
+  const handleProfileSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    const updated: UserProfileData = {
+      currentRegion: currentRegionInput,
+      residenceYears: Number(residenceYearsInput),
+      age: ageInput,
+      preferredRegions: [prefRegion1, prefRegion2].filter(r => r !== 'ALL')
+    };
+    onUpdateProfile(updated);
+    setIsEditProfileOpen(false);
   };
 
   // Get active Sigungu options based on selected Sido
@@ -127,6 +272,299 @@ export default function Dashboard({
         maxHeight: '65%',
         overflowY: 'auto'
       }}>
+        {/* Auth / Personalization Section */}
+        {currentUser === null ? (
+          <div style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            border: '1px solid var(--border-light)'
+          }}>
+            <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>개인 맞춤 설정</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>로그인/회원가입</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="사용자명 입력..."
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  style={{ height: '32px', fontSize: '0.75rem', padding: '0 8px' }}
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: '32px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)' }}>
+                  확인
+                </button>
+              </div>
+              <p style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: '1.3', margin: 0 }}>
+                ※ 이름 입력 시 기존에 저장된 선호지역, 거주기간 등 개인화 설정이 자동으로 로드됩니다.
+              </p>
+            </form>
+          </div>
+        ) : (
+          <div style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            border: '1.5px solid var(--primary-light)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)' }}>
+                👤 {currentUser}님 프로필
+              </span>
+              <button 
+                onClick={onLogout} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}
+              >
+                로그아웃
+              </button>
+            </div>
+
+            {!isEditProfileOpen ? (
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div><strong>거주지:</strong> {userProfile?.currentRegion === 'ALL' ? '전국' : userProfile?.currentRegion} ({userProfile?.residenceYears || 0}년 거주)</div>
+                <div><strong>선호 지역:</strong> {userProfile?.preferredRegions && userProfile.preferredRegions.length > 0 ? userProfile.preferredRegions.join(', ') : '미지정'}</div>
+                <div><strong>나이:</strong> {userProfile?.age ? `${userProfile.age}세` : '미입력'}</div>
+                <button 
+                  onClick={() => {
+                    if (userProfile) {
+                      setCurrentRegionInput(userProfile.currentRegion);
+                      setResidenceYearsInput(userProfile.residenceYears);
+                      setAgeInput(userProfile.age);
+                      setPrefRegion1(userProfile.preferredRegions[0] || 'ALL');
+                      setPrefRegion2(userProfile.preferredRegions[1] || 'ALL');
+                    }
+                    setIsEditProfileOpen(true);
+                  }}
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: '0.72rem', marginTop: '4px', width: '100%', height: '28px', borderRadius: '4px' }}
+                >
+                  설정 수정하기
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleProfileSave} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border-light)', paddingTop: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>현재 거주지</label>
+                    <select 
+                      className="form-input" 
+                      value={currentRegionInput} 
+                      onChange={(e) => setCurrentRegionInput(e.target.value)}
+                      style={{ height: '28px', fontSize: '0.72rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">전체/없음</option>
+                      {regionsData.map(r => (
+                        <option key={r.name} value={r.name}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>거주 년수</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      min="0"
+                      value={residenceYearsInput} 
+                      onChange={(e) => setResidenceYearsInput(Number(e.target.value))}
+                      style={{ height: '28px', fontSize: '0.72rem', padding: '0 6px' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>나이 (선택 사항)</label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    placeholder="예: 25"
+                    min="0"
+                    value={ageInput} 
+                    onChange={(e) => setAgeInput(e.target.value)}
+                    style={{ height: '28px', fontSize: '0.72rem', padding: '0 6px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>선호지역 1</label>
+                    <select 
+                      className="form-input" 
+                      value={prefRegion1} 
+                      onChange={(e) => setPrefRegion1(e.target.value)}
+                      style={{ height: '28px', fontSize: '0.72rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">없음</option>
+                      {regionsData.map(r => (
+                        <option key={r.name} value={r.name}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.65rem', marginBottom: '2px' }}>선호지역 2</label>
+                    <select 
+                      className="form-input" 
+                      value={prefRegion2} 
+                      onChange={(e) => setPrefRegion2(e.target.value)}
+                      style={{ height: '28px', fontSize: '0.72rem', padding: '0 4px', cursor: 'pointer' }}
+                    >
+                      <option value="ALL">없음</option>
+                      {regionsData.map(r => (
+                        <option key={r.name} value={r.name}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', lineHeight: '1.3', margin: '4px 0' }}>
+                  * 입력하신 나이 등 모든 개인 정보는 기기에만 안전하게 저장되며, 수집 목적이 아닌 맞춤형 청약 추천 용도로만 활용됩니다. 비워둘 수 있습니다.
+                </p>
+
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                  <button type="button" onClick={() => setIsEditProfileOpen(false)} className="btn btn-secondary" style={{ flex: 1, height: '28px', fontSize: '0.72rem', padding: 0 }}>
+                    취소
+                  </button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '28px', fontSize: '0.72rem', padding: 0 }}>
+                    저장하기
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* Bookmarks (찜 목록) Section */}
+        <div style={{
+          backgroundColor: 'var(--bg-secondary)',
+          border: '1px solid var(--border-light)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden'
+        }}>
+          <button
+            onClick={() => setIsBookmarksOpen(!isBookmarksOpen)}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              backgroundColor: 'var(--bg-tertiary)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              color: 'var(--text-primary)'
+            }}
+          >
+            <span>❤️ 찜한 공고 ({bookmarks.length}개)</span>
+            <span style={{ fontSize: '0.7rem' }}>{isBookmarksOpen ? '▲' : '▼'}</span>
+          </button>
+          
+          {isBookmarksOpen && (
+            <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+              {bookmarks.length === 0 ? (
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '12px 0' }}>
+                  찜한 공고가 없습니다.<br />매물 목록의 하트(♡)를 클릭하여 추가해보세요.
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed var(--border-light)', paddingBottom: '6px' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>모집 상태 전환 테스트</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSimulateStatusChange();
+                      }}
+                      className="btn btn-primary"
+                      style={{ padding: '2px 8px', fontSize: '0.65rem', height: '22px', borderRadius: '4px' }}
+                    >
+                      모집상태 변경 시뮬레이션
+                    </button>
+                  </div>
+                  
+                  {bookmarks.map(item => (
+                    <div 
+                      key={item.id}
+                      onClick={() => onSelectUnit(item.id)}
+                      style={{
+                        padding: '8px 10px',
+                        backgroundColor: 'var(--bg-primary)',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-light)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '0.72rem',
+                        transition: 'border-color 0.15s'
+                      }}
+                      className="hover-scale"
+                    >
+                      <div style={{ flex: 1, minWidth: 0, paddingRight: '8px' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.unitName}
+                        </div>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>
+                          마감: {item.deadlineDate} ({item.status})
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleBookmark(item);
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.95rem', padding: '2px' }}
+                      >
+                        ♥
+                      </button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Target Recommendation Category Presets */}
+        <div>
+          <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>유형별 맞춤 추천 테마</label>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {[
+              { id: 'youth', label: '청년 추천' },
+              { id: 'newlywed', label: '신혼부부 추천' },
+              { id: 'multichild', label: '다자녀 추천' },
+              { id: 'senior', label: '고령자 추천' }
+            ].map(preset => {
+              const active = activePreset === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => applyPreset(preset.id as any)}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '15px',
+                    border: `1.2px solid ${active ? 'var(--primary)' : 'var(--border-medium)'}`,
+                    backgroundColor: active ? 'var(--primary-light)' : 'var(--bg-secondary)',
+                    color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  className="hover-scale"
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Search Input */}
         <div style={{ position: 'relative' }}>
           <input
@@ -386,6 +824,7 @@ export default function Dashboard({
             onChange={(e) => setSortBy(e.target.value)}
             style={{ cursor: 'pointer', height: '32px', padding: '0 8px', fontSize: '0.75rem' }}
           >
+            {currentUser && <option value="recommendation">★ 개인 맞춤 추천순</option>}
             <option value="latest">최신 공고 등록 순</option>
             <option value="minDeposit">최저 보증금 순</option>
             <option value="minRent">최저 월세 순</option>
@@ -453,7 +892,31 @@ export default function Dashboard({
                 className={!isSelected ? 'hover-scale' : ''}
               >
                 {/* Badges */}
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Heart bookmark toggle */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleBookmark(unit);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: bookmarks.some(b => b.id === unit.id) ? '#ef4444' : 'var(--text-tertiary)',
+                      fontSize: '1.05rem',
+                      padding: '2px 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.1s'
+                    }}
+                    title="찜하기"
+                    className="hover-scale"
+                  >
+                    {bookmarks.some(b => b.id === unit.id) ? '♥' : '♡'}
+                  </button>
+
                   <span className={getProviderBadgeClass(unit.provider)}>
                     {unit.provider === 'PRIVATE' ? '민간' : unit.provider}
                   </span>
@@ -463,6 +926,13 @@ export default function Dashboard({
                   <span className={`badge ${unit.status === '모집중' ? 'badge-active' : 'badge-closed'}`} style={{ fontSize: '0.65rem' }}>
                     {unit.status}
                   </span>
+
+                  {/* Recommendation Rank Badge */}
+                  {currentUser && unit.score !== undefined && unit.score > 0 && (
+                    <span className="badge" style={{ backgroundColor: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 800 }}>
+                      ★ 추천 {filteredUnits.indexOf(unit) + 1}위
+                    </span>
+                  )}
                   
                   {/* Pyeong size highlighted */}
                   <span className="badge" style={{ marginLeft: 'auto', backgroundColor: 'var(--primary)', color: '#ffffff', fontWeight: 700, fontSize: '0.65rem' }}>
