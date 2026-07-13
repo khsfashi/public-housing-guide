@@ -159,7 +159,9 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
   };
 
   // Fallback Map UI
-  if (mapError || !apiKey) {
+  const isKeyMissing = !apiKey;
+
+  if (mapError || isKeyMissing) {
     return (
       <div className="map-fallback" style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
         {/* Decorative Grid Lines to make it look like a map */}
@@ -194,20 +196,37 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
           backgroundColor: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
           borderRadius: 'var(--radius-md)',
-          padding: '12px 18px',
+          padding: '16px 20px',
           boxShadow: 'var(--shadow-md)',
           zIndex: 10,
           maxWidth: '500px',
           textAlign: 'left'
         }}>
-          <h4 style={{ color: 'var(--primary)', marginBottom: '4px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="logo-icon" style={{ width: '18px', height: '18px', fontSize: '0.6rem' }}>i</span>
-            가상 인터랙티브 지도 작동 중
-          </h4>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-            현재 Kakao Maps API 키가 기입되지 않아 데모용 가상 인터랙티브 지도가 활성화되었습니다. 
-            <strong> .env.local</strong> 파일에 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>를 등록하시면 실제 카카오 지도가 로드됩니다.
-          </p>
+          {isKeyMissing ? (
+            <>
+              <h4 style={{ color: 'var(--primary)', marginBottom: '6px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="logo-icon" style={{ width: '18px', height: '18px', fontSize: '0.6rem' }}>i</span>
+                가상 인터랙티브 지도 작동 중
+              </h4>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                현재 Kakao Maps API 키가 기입되지 않아 데모용 가상 인터랙티브 지도가 활성화되었습니다. 
+                <strong> .env.local</strong> 파일 또는 Vercel 설정에 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>를 등록하시면 실제 카카오 지도가 로드됩니다.
+              </p>
+            </>
+          ) : (
+            <>
+              <h4 style={{ color: '#ef4444', marginBottom: '6px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="logo-icon" style={{ width: '18px', height: '18px', fontSize: '0.6rem', background: '#ef4444' }}>!</span>
+                카카오 지도 로드 오류 발생
+              </h4>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                API 키는 등록되었으나 카카오 SDK 로드에 실패했습니다. 아래 원인을 확인해 주세요:<br />
+                1. 발급받으신 키가 <strong>JavaScript 키</strong>가 맞는지 확인 (REST API, Admin 키 등은 작동하지 않음)<br />
+                2. 카카오 개발자 센터 [플랫폼 &gt; Web]에 현재 도메인(<code>https://public-housing-guide.vercel.app</code>)이 정확히 등록되었는지 확인<br />
+                3. Vercel 환경변수 이름이 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>가 맞는지 확인
+              </p>
+            </>
+          )}
         </div>
 
         {/* Interactive Markers on Grid */}
