@@ -1,16 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { HouseType } from '../types';
-
-interface CompareCartItem extends HouseType {
-  announcementTitle: string;
-  provider: string;
-  housingType: string;
-}
+import { FlatHouseUnit } from '../types';
 
 interface ComparePanelProps {
-  compareCart: CompareCartItem[];
+  compareCart: FlatHouseUnit[];
   onRemove: (id: string) => void;
   onClear: () => void;
 }
@@ -31,23 +25,19 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
     return `${Math.floor(val / 10000)}만원`;
   };
 
-  const formatRawNumber = (val: number) => {
-    return val.toLocaleString();
+  // Metric calculators (using pyeongSize directly)
+  const getDepositPerPyeong = (item: FlatHouseUnit) => {
+    if (item.pyeongSize === 0) return 0;
+    return Math.round(item.deposit / item.pyeongSize);
   };
 
-  // Metric calculators
-  const getDepositPerPyeong = (item: CompareCartItem) => {
-    const pyeong = item.exclusiveArea * 0.3025;
-    return Math.round(item.deposit / pyeong);
-  };
-
-  const getRentPerPyeong = (item: CompareCartItem) => {
-    const pyeong = item.exclusiveArea * 0.3025;
-    return Math.round(item.monthlyRent / pyeong);
+  const getRentPerPyeong = (item: FlatHouseUnit) => {
+    if (item.pyeongSize === 0) return 0;
+    return Math.round(item.monthlyRent / item.pyeongSize);
   };
 
   // Calculate 2-year cost: Deposit + (Rent * 24 months)
-  const get2YearTotalCost = (item: CompareCartItem) => {
+  const get2YearTotalCost = (item: FlatHouseUnit) => {
     return item.deposit + (item.monthlyRent * 24);
   };
 
@@ -61,12 +51,23 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
           justifyContent: 'space-between',
           alignItems: 'center',
           border: '1.5px solid var(--primary)',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '90%',
+          maxWidth: '800px',
+          zIndex: 100,
+          backgroundColor: 'var(--bg-secondary)',
+          boxShadow: 'var(--shadow-md)',
+          padding: '12px 20px',
+          borderRadius: 'var(--radius-md)',
+          position: 'absolute'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
           <div style={{
-            width: '28px',
-            height: '28px',
+            width: '24px',
+            height: '24px',
             borderRadius: '50%',
             backgroundColor: 'var(--primary)',
             color: 'white',
@@ -74,30 +75,31 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 800,
-            fontSize: '0.85rem'
+            fontSize: '0.8rem',
+            flexShrink: 0
           }}>
             {compareCart.length}
           </div>
-          <div>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>비교함에 담긴 주택형</h4>
-            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              {compareCart.map(c => c.name).join(', ')}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>비교함에 담긴 주택</h4>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {compareCart.map(c => c.unitName).join(', ')}
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', flexShrink: 0 }}>
           <button 
             onClick={onClear} 
             className="btn btn-secondary" 
-            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+            style={{ padding: '5px 10px', fontSize: '0.72rem', borderRadius: '4px' }}
           >
             비우기
           </button>
           <button 
             onClick={() => setIsModalOpen(true)} 
             className="btn btn-primary" 
-            style={{ padding: '6px 16px', fontSize: '0.75rem' }}
+            style={{ padding: '5px 14px', fontSize: '0.72rem', borderRadius: '4px' }}
           >
             상세 비교하기 (표)
           </button>
@@ -131,7 +133,6 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
             boxShadow: 'var(--shadow-premium)',
             border: '1px solid var(--border-light)',
             overflow: 'hidden',
-            animation: 'scaleIn 0.2s ease-out'
           }}>
             {/* Modal Header */}
             <div style={{
@@ -142,8 +143,8 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
               alignItems: 'center',
               backgroundColor: 'var(--bg-secondary)'
             }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                🏠 선택한 주택형 세부 비교
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                🏠 선택한 주택 세부 비교표
               </h2>
               <button 
                 onClick={() => setIsModalOpen(false)} 
@@ -160,13 +161,13 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
                 width: '100%',
                 borderCollapse: 'collapse',
                 textAlign: 'left',
-                fontSize: '0.85rem'
+                fontSize: '0.82rem'
               }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--border-medium)' }}>
-                    <th style={{ padding: '12px 16px', minWidth: '150px', color: 'var(--text-secondary)' }}>구분</th>
+                    <th style={{ padding: '10px 12px', minWidth: '130px', color: 'var(--text-secondary)' }}>구분</th>
                     {compareCart.map(item => (
-                      <th key={item.id} style={{ padding: '12px 16px', minWidth: '220px', verticalAlign: 'top' }}>
+                      <th key={item.id} style={{ padding: '10px 12px', minWidth: '200px', verticalAlign: 'top' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                           <span className={`badge ${item.provider === 'LH' ? 'badge-lh' : item.provider === 'SH' ? 'badge-sh' : 'badge-private'}`}>
                             {item.provider}
@@ -178,22 +179,22 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
                               border: 'none', 
                               color: 'var(--text-tertiary)', 
                               cursor: 'pointer',
-                              fontSize: '0.8rem'
+                              fontSize: '0.78rem'
                             }}
                             title="비교에서 삭제"
                           >
                             ✕
                           </button>
                         </div>
-                        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{item.name}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{item.unitName}</div>
                         <div style={{ 
-                          fontSize: '0.7rem', 
+                          fontSize: '0.68rem', 
                           fontWeight: 500, 
                           color: 'var(--text-secondary)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          maxWidth: '200px',
+                          maxWidth: '180px',
                           marginTop: '2px'
                         }} title={item.announcementTitle}>
                           {item.announcementTitle}
@@ -205,51 +206,61 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
                 <tbody>
                   {/* Housing Type */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>주택 유형</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>주택 유형</td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px', fontWeight: 600 }}>{item.housingType}</td>
+                      <td key={item.id} style={{ padding: '10px 12px', fontWeight: 600 }}>{item.housingType}</td>
                     ))}
                   </tr>
 
                   {/* Areas */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>전용 면적</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>전용 면적</td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px' }}>
-                        <strong>{item.exclusiveArea} ㎡</strong> ({(item.exclusiveArea * 0.3025).toFixed(1)}평)
+                      <td key={item.id} style={{ padding: '10px 12px' }}>
+                        <strong>{item.exclusiveArea} ㎡</strong> ({item.pyeongSize}평)
                       </td>
                     ))}
                   </tr>
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>공급 면적</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>공급 면적</td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px' }}>
+                      <td key={item.id} style={{ padding: '10px 12px' }}>
                         <strong>{item.supplyArea} ㎡</strong> ({(item.supplyArea * 0.3025).toFixed(1)}평)
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Location Address */}
+                  <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>상세 위치</td>
+                    {compareCart.map(item => (
+                      <td key={item.id} style={{ padding: '10px 12px', fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.3' }}>
+                        {item.address}
                       </td>
                     ))}
                   </tr>
 
                   {/* Basic Deposit */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>기본 보증금</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>기본 보증금</td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>{formatPrice(item.deposit)}</td>
+                      <td key={item.id} style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary)' }}>{formatPrice(item.deposit)}</td>
                     ))}
                   </tr>
 
                   {/* Basic Monthly Rent */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>기본 월세</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>기본 월세</td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)' }}>{formatPrice(item.monthlyRent)}</td>
+                      <td key={item.id} style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--primary)' }}>{formatPrice(item.monthlyRent)}</td>
                     ))}
                   </tr>
 
                   {/* Deposit per Pyeong */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>평당 보증금 <span style={{ fontSize: '0.65rem', fontWeight: 500 }}>(전용면적 기준)</span></td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>평당 보증금 <span style={{ fontSize: '0.62rem', fontWeight: 500 }}>(전용 기준)</span></td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>
+                      <td key={item.id} style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
                         {formatPrice(getDepositPerPyeong(item))} / 평
                       </td>
                     ))}
@@ -257,9 +268,9 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
 
                   {/* Rent per Pyeong */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>평당 월세 <span style={{ fontSize: '0.65rem', fontWeight: 500 }}>(전용면적 기준)</span></td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>평당 월세 <span style={{ fontSize: '0.62rem', fontWeight: 500 }}>(전용 기준)</span></td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>
+                      <td key={item.id} style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
                         {formatPrice(getRentPerPyeong(item))} / 평
                       </td>
                     ))}
@@ -267,23 +278,49 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
 
                   {/* Max Conversion options */}
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>최대 전환 보증금 ↔ 월세</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>최대 보증금 전환 시</td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '12px 16px', fontSize: '0.78rem', lineHeight: '1.4' }}>
+                      <td key={item.id} style={{ padding: '10px 12px', fontSize: '0.75rem', lineHeight: '1.4' }}>
                         보증금: {formatPrice(item.maxDeposit)}<br />
                         월세: <strong style={{ color: 'var(--primary)' }}>{formatPrice(item.minMonthlyRent)}</strong>
                       </td>
                     ))}
                   </tr>
 
+                  {/* Direct Apply Links in Table */}
+                  <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}>신청 링크</td>
+                    {compareCart.map(item => (
+                      <td key={item.id} style={{ padding: '10px 12px' }}>
+                        <a
+                          href={item.applyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: 'var(--primary)',
+                            color: '#ffffff',
+                            textDecoration: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            display: 'inline-block'
+                          }}
+                        >
+                          청약 접수 ↗
+                        </a>
+                      </td>
+                    ))}
+                  </tr>
+
                   {/* 2-Year Total Cost (Estimation) */}
                   <tr style={{ borderBottom: '1px solid var(--border-medium)', backgroundColor: 'var(--primary-light)' }}>
-                    <td style={{ padding: '14px 16px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    <td style={{ padding: '12px 12px', fontWeight: 800, color: 'var(--text-primary)' }}>
                       2년 거주 총 지출<br />
-                      <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-secondary)' }}>(보증금 + 24개월 월세)</span>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 500, color: 'var(--text-secondary)' }}>(보증금 + 24개월 월세)</span>
                     </td>
                     {compareCart.map(item => (
-                      <td key={item.id} style={{ padding: '14px 16px', fontSize: '1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                      <td key={item.id} style={{ padding: '12px 12px', fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)' }}>
                         {formatPrice(get2YearTotalCost(item))}
                       </td>
                     ))}
@@ -303,7 +340,7 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
               <button 
                 onClick={() => setIsModalOpen(false)} 
                 className="btn btn-primary"
-                style={{ padding: '8px 24px' }}
+                style={{ padding: '8px 24px', borderRadius: '4px' }}
               >
                 닫기
               </button>
@@ -311,20 +348,6 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
           </div>
         </div>
       )}
-
-      {/* Basic Keyframe Animation in CSS Injection */}
-      <style jsx global>{`
-        @keyframes scaleIn {
-          from {
-            transform: scale(0.95);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </>
   );
 }

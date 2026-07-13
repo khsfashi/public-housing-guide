@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Announcement } from '../types';
+import { FlatHouseUnit } from '../types';
 
 interface KakaoMapProps {
-  announcements: Announcement[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  units: FlatHouseUnit[];
+  selectedUnitId: string | null;
+  onSelectUnit: (id: string | null) => void;
 }
 
 declare global {
@@ -15,20 +15,20 @@ declare global {
   }
 }
 
-export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoMapProps) {
+export default function KakaoMap({ units, selectedUnitId, onSelectUnit }: KakaoMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
 
-  const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_KA_KAO_MAP_CLIENT_KEY || process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY;
 
   // Coordinate limits for Fallback interactive map
-  const minLat = 37.3;
-  const maxLat = 37.65;
-  const minLng = 126.65;
-  const maxLng = 127.15;
+  const minLat = 33.0; // expanded to cover all of South Korea
+  const maxLat = 38.6;
+  const minLng = 126.0;
+  const maxLng = 130.0;
 
   useEffect(() => {
     if (!apiKey) {
@@ -99,59 +99,74 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    if (announcements.length === 0) return;
+    if (units.length === 0) return;
 
     const bounds = new kakao.maps.LatLngBounds();
+    let boundsCount = 0;
 
-    announcements.forEach(ann => {
-      const position = new kakao.maps.LatLng(ann.latitude, ann.longitude);
-      bounds.extend(position);
+    units.forEach(unit => {
+      // Ensure valid coords
+      const lat = unit.latitude || defaultCenter.lat;
+      const lng = unit.longitude || defaultCenter.lng;
+      const position = new kakao.maps.LatLng(lat, lng);
+      
+      // Only extend bounds for valid coords
+      if (lat > 30 && lat < 45 && lng > 120 && lng < 135) {
+        bounds.extend(position);
+        boundsCount++;
+      }
 
-      // Create Custom Marker Image/Color based on Provider
-      let markerColor = '#2563eb'; // LH
-      if (ann.provider === 'SH') markerColor = '#059669';
-      else if (ann.provider === 'PRIVATE') markerColor = '#7c3aed';
+      const isSelected = unit.id === selectedUnitId;
 
-      const isSelected = ann.id === selectedId;
-
-      // Custom Content HTML for Kakao Map CustomOverlay or Marker
-      // For simplicity, we create standard markers with custom colors or standard kakao markers.
-      // Here we use standard Marker but we can make it prettier.
       const marker = new kakao.maps.Marker({
         position: position,
         map: map,
-        title: ann.title
+        title: `${unit.provider}: ${unit.unitName}`
       });
 
       markersRef.current.push(marker);
 
       // Click Event
       kakao.maps.event.addListener(marker, 'click', () => {
-        onSelect(ann.id);
+        onSelectUnit(unit.id);
       });
     });
 
     // Pan map to bounds
-    if (selectedId) {
-      const selectedAnn = announcements.find(a => a.id === selectedId);
-      if (selectedAnn) {
-        const moveLatLng = new kakao.maps.LatLng(selectedAnn.latitude, selectedAnn.longitude);
+    if (selectedUnitId) {
+      const selectedUnit = units.find(u => u.id === selectedUnitId);
+      if (selectedUnit) {
+        const moveLatLng = new kakao.maps.LatLng(selectedUnit.latitude, selectedUnit.longitude);
         map.panTo(moveLatLng);
       }
-    } else if (announcements.length > 0) {
+    } else if (boundsCount > 0) {
       map.setBounds(bounds);
     }
-  }, [announcements, mapLoaded, selectedId, onSelect]);
+  }, [units, mapLoaded, selectedUnitId, onSelectUnit]);
+
+  // Default coordinate center
+  const defaultCenter = { lat: 37.5665, lng: 126.9780 };
 
   // Fallback Mock Map Click Handler
   const handleFallbackMarkerClick = (id: string) => {
-    onSelect(id);
+    onSelectUnit(id);
   };
 
   // Convert coords to percentage for Fallback Map
   const getPercentageCoords = (lat: number, lng: number) => {
-    const x = ((lng - minLng) / (maxLng - minLng)) * 100;
-    const y = 100 - ((lat - minLat) / (maxLat - minLat)) * 100;
+    // If coords are out of Korean bounding box, use default
+    const targetLat = (lat > 30 && lat < 45) ? lat : defaultCenter.lat;
+    const targetLng = (lng > 120 && lng < 135) ? lng : defaultCenter.lng;
+
+    // Adjust scale based on coordinates density (focusing on Seoul/Gyeonggi area)
+    const localMinLat = 34.8;
+    const localMaxLat = 38.2;
+    const localMinLng = 126.2;
+    const localMaxLng = 129.5;
+
+    const x = ((targetLng - localMinLng) / (localMaxLng - localMinLng)) * 100;
+    const y = 100 - ((targetLat - localMinLat) / (localMaxLat - localMinLat)) * 100;
+    
     return {
       x: Math.max(5, Math.min(95, x)), // Clamp to avoid bleeding off edges
       y: Math.max(5, Math.min(95, y)),
@@ -196,34 +211,31 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
           backgroundColor: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
           borderRadius: 'var(--radius-md)',
-          padding: '16px 20px',
+          padding: '12px 18px',
           boxShadow: 'var(--shadow-md)',
           zIndex: 10,
-          maxWidth: '500px',
+          maxWidth: '520px',
           textAlign: 'left'
         }}>
           {isKeyMissing ? (
             <>
-              <h4 style={{ color: 'var(--primary)', marginBottom: '6px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="logo-icon" style={{ width: '18px', height: '18px', fontSize: '0.6rem' }}>i</span>
-                가상 인터랙티브 지도 작동 중
+              <h4 style={{ color: 'var(--primary)', marginBottom: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="logo-icon" style={{ width: '16px', height: '16px', fontSize: '0.55rem' }}>i</span>
+                인터랙티브 가상 지도 렌더링 중
               </h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                현재 Kakao Maps API 키가 기입되지 않아 데모용 가상 인터랙티브 지도가 활성화되었습니다. 
-                <strong> .env.local</strong> 파일 또는 Vercel 설정에 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>를 등록하시면 실제 카카오 지도가 로드됩니다.
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                현재 Kakao Maps API 키가 부재하여 가상 지도로 대체 동작 중입니다. 
+                <code> .env.local</code>에 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>를 등록하면 실제 카카오맵을 로드합니다.
               </p>
             </>
           ) : (
             <>
-              <h4 style={{ color: '#ef4444', marginBottom: '6px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="logo-icon" style={{ width: '18px', height: '18px', fontSize: '0.6rem', background: '#ef4444' }}>!</span>
-                카카오 지도 로드 오류 발생
+              <h4 style={{ color: '#ef4444', marginBottom: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="logo-icon" style={{ width: '16px', height: '16px', fontSize: '0.55rem', background: '#ef4444' }}>!</span>
+                카카오 지도 API 키 오류
               </h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                API 키는 등록되었으나 카카오 SDK 로드에 실패했습니다. 아래 원인을 확인해 주세요:<br />
-                1. 발급받으신 키가 <strong>JavaScript 키</strong>가 맞는지 확인 (REST API, Admin 키 등은 작동하지 않음)<br />
-                2. 카카오 개발자 센터 [플랫폼 &gt; Web]에 현재 도메인(<code>https://public-housing-guide.vercel.app</code>)이 정확히 등록되었는지 확인<br />
-                3. Vercel 환경변수 이름이 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>가 맞는지 확인
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                카카오 지도 SDK 로딩 에러(403)입니다. [카카오 디벨로퍼스]에서 <strong>JavaScript 앱 키</strong> 확인 및 도메인(localhost:3000) 등록 여부를 체크해 주세요.
               </p>
             </>
           )}
@@ -231,17 +243,17 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
 
         {/* Interactive Markers on Grid */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-          {announcements.map(ann => {
-            const { x, y } = getPercentageCoords(ann.latitude, ann.longitude);
-            const isSelected = ann.id === selectedId;
+          {units.map(unit => {
+            const { x, y } = getPercentageCoords(unit.latitude, unit.longitude);
+            const isSelected = unit.id === selectedUnitId;
             let markerColor = 'var(--lh-color)';
-            if (ann.provider === 'SH') markerColor = 'var(--sh-color)';
-            if (ann.provider === 'PRIVATE') markerColor = 'var(--private-color)';
+            if (unit.provider === 'SH') markerColor = 'var(--sh-color)';
+            if (unit.provider === 'PRIVATE') markerColor = 'var(--private-color)';
 
             return (
               <button
-                key={ann.id}
-                onClick={() => handleFallbackMarkerClick(ann.id)}
+                key={unit.id}
+                onClick={() => handleFallbackMarkerClick(unit.id)}
                 style={{
                   position: 'absolute',
                   left: `${x}%`,
@@ -258,57 +270,45 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
                 }}
                 className={isSelected ? 'hover-scale' : ''}
               >
-                {/* Tooltip on Hover or Selection */}
+                {/* Tooltip */}
                 <div style={{
                   backgroundColor: 'var(--bg-secondary)',
                   color: 'var(--text-primary)',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  padding: '4px 8px',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  padding: '3px 6px',
                   borderRadius: '4px',
-                  border: `1.5px solid ${isSelected ? 'var(--primary)' : 'var(--border-medium)'}`,
+                  border: `1.2px solid ${isSelected ? 'var(--primary)' : 'var(--border-medium)'}`,
                   whiteSpace: 'nowrap',
                   boxShadow: 'var(--shadow-sm)',
-                  marginBottom: '4px',
+                  marginBottom: '2px',
                   opacity: isSelected ? 1 : 0.8,
-                  display: isSelected ? 'block' : 'none' // display only when selected for neatness, or we can make it block on hover in CSS
+                  display: isSelected ? 'block' : 'none'
                 }}>
-                  {ann.provider}: {ann.housingType}
+                  {unit.unitName} ({unit.pyeongSize}평)
                 </div>
                 {/* Marker Pin */}
                 <div style={{
-                  width: isSelected ? '28px' : '20px',
-                  height: isSelected ? '28px' : '20px',
+                  width: isSelected ? '26px' : '18px',
+                  height: isSelected ? '26px' : '18px',
                   borderRadius: '50% 50% 50% 0',
                   background: markerColor,
                   transform: 'rotate(-45deg)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '2px solid white',
+                  border: '1.5px solid white',
                   boxShadow: 'var(--shadow-md)',
                   transition: 'all 0.2s'
                 }}>
                   <div style={{
-                    width: '6px',
-                    height: '6px',
+                    width: '5px',
+                    height: '5px',
                     borderRadius: '50%',
                     background: 'white',
                     transform: 'rotate(45deg)'
                   }} />
                 </div>
-                {/* Pulsing glow if selected */}
-                {isSelected && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-4px',
-                    width: '12px',
-                    height: '6px',
-                    background: 'rgba(0,0,0,0.2)',
-                    borderRadius: '50%',
-                    zIndex: -1
-                  }} />
-                )}
               </button>
             );
           })}
@@ -327,16 +327,16 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
           zIndex: 10,
           display: 'flex',
           gap: '12px',
-          fontSize: '0.75rem'
+          fontSize: '0.72rem'
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--lh-color)' }} /> LH
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--lh-color)' }} /> LH
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--sh-color)' }} /> SH
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--sh-color)' }} /> SH
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--private-color)' }} /> 민간
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--private-color)' }} /> 민간
           </span>
         </div>
       </div>
