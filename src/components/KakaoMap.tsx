@@ -23,7 +23,6 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
   const markersRef = useRef<any[]>([]);
 
   const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY;
-  console.log("KakaoMap Component Rendered! Resolved apiKey:", apiKey);
 
   // Coordinate limits for Fallback interactive map
   const minLat = 37.3;
@@ -42,14 +41,12 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
 
     const initializeMap = () => {
       const kakao = window.kakao;
-      console.log("Initializing map... window.kakao:", !!kakao, "kakao.maps:", !!(kakao && kakao.maps));
       if (!kakao || !kakao.maps) {
         setMapError(true);
         return;
       }
 
       kakao.maps.load(() => {
-        console.log("kakao.maps.load callback triggered!");
         if (!mapContainerRef.current) return;
 
         // Default center: Seoul City Hall
@@ -71,18 +68,15 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
       script.async = true;
       document.head.appendChild(script);
       script.onload = () => {
-        console.log("Kakao Map Script Loaded! apiKey length:", apiKey?.length, "apiKey first 4 chars:", apiKey?.substring(0, 4));
         initializeMap();
       };
-      script.onerror = (e) => {
-        console.error("Kakao Map Script Load Failed (onerror triggered):", e);
+      script.onerror = () => {
         setMapError(true);
       };
     } else {
       if (window.kakao && window.kakao.maps) {
         initializeMap();
       } else {
-        console.log("Script already exists but window.kakao is not ready. Adding event listener...");
         script.addEventListener('load', initializeMap);
       }
     }
