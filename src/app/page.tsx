@@ -144,7 +144,26 @@ export default function Home() {
           <div>
             <span>Rental Home Finder</span>
             <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginLeft: '10px' }}>
-              LH · SH · 민간임대 세부 조건 비교기
+              LH · SH · 민간임대 세부 조건 비교기 (연동 테스트 버전)
+            </span>
+            <span style={{ 
+              fontSize: '0.7rem', 
+              fontWeight: 700, 
+              marginLeft: '10px',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              backgroundColor: process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY === 'NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY' 
+                ? '#ef4444' 
+                : process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY 
+                  ? '#10b981' 
+                  : '#3b82f6',
+              color: 'white'
+            }}>
+              {process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY === 'NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY'
+                ? '오류: 변수명이 값으로 들어감'
+                : process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY
+                  ? '키 입력 성공'
+                  : '키 누락'}
             </span>
           </div>
         </div>
