@@ -85,3 +85,45 @@ export const regionsData: SidoRegion[] = [
     sigungu: ['서귀포시', '제주시']
   }
 ];
+
+export interface RegionHierarchy {
+  sido: string;
+  sigunguList: {
+    sigungu: string;
+    guList: string[];
+  }[];
+}
+
+export function getRegionHierarchy(): RegionHierarchy[] {
+  return regionsData.map(sido => {
+    const sigunguMap = new Map<string, string[]>();
+    
+    sido.sigungu.forEach(item => {
+      const parts = item.split(' ');
+      if (parts.length > 1) {
+        const city = parts[0];
+        const gu = parts[1];
+        if (!sigunguMap.has(city)) {
+          sigunguMap.set(city, []);
+        }
+        sigunguMap.get(city)!.push(gu);
+      } else {
+        const cityOrGu = parts[0];
+        if (!sigunguMap.has(cityOrGu)) {
+          sigunguMap.set(cityOrGu, []);
+        }
+      }
+    });
+    
+    const sigunguList = Array.from(sigunguMap.entries()).map(([sigungu, guList]) => ({
+      sigungu,
+      guList
+    }));
+    
+    return {
+      sido: sido.name,
+      sigunguList
+    };
+  });
+}
+

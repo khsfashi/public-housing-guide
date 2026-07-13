@@ -38,6 +38,7 @@ export default function Home() {
 
   const [selectedSido, setSelectedSido] = useState('ALL');
   const [selectedSigungu, setSelectedSigungu] = useState('ALL');
+  const [selectedGu, setSelectedGu] = useState('ALL');
 
   // Price & Area filter states
   const [minDeposit, setMinDeposit] = useState(0);
@@ -376,8 +377,11 @@ export default function Home() {
         // 4. Cascading Region filter
         if (selectedSido !== 'ALL') {
           if (!unit.region.includes(selectedSido)) return false;
-          if (selectedSigungu !== 'ALL' && !unit.region.includes(selectedSigungu)) {
-            return false;
+          if (selectedSigungu !== 'ALL') {
+            if (!unit.region.includes(selectedSigungu)) return false;
+            if (selectedGu !== 'ALL' && !unit.region.includes(selectedGu)) {
+              return false;
+            }
           }
         }
 
@@ -402,7 +406,6 @@ export default function Home() {
       })
       .sort((a, b) => {
         if (sortBy === 'recommendation') {
-          // If recommendation score is identical, sub-sort by latest announcement
           if (b.score === a.score) {
             return new Date(b.announcementDate).getTime() - new Date(a.announcementDate).getTime();
           }
@@ -432,6 +435,7 @@ export default function Home() {
     selectedHousingTypes,
     selectedSido,
     selectedSigungu,
+    selectedGu,
     minDeposit,
     maxDeposit,
     minMonthlyRent,
@@ -580,6 +584,8 @@ export default function Home() {
               setSelectedSido={setSelectedSido}
               selectedSigungu={selectedSigungu}
               setSelectedSigungu={setSelectedSigungu}
+              selectedGu={selectedGu}
+              setSelectedGu={setSelectedGu}
               minDeposit={minDeposit}
               setMinDeposit={setMinDeposit}
               maxDeposit={maxDeposit}

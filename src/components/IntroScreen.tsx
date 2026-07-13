@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { UserProfileData } from '../types';
-import { regionsData } from '../data/regions';
+import { regionsData, getRegionHierarchy } from '../data/regions';
 import ThemeToggle from './ThemeToggle';
 
 interface IntroScreenProps {
@@ -14,13 +14,38 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
   const [lastUser, setLastUser] = useState<string | null>(null);
   const [showProfileForm, setShowProfileForm] = useState(false);
   
+  const regionHierarchy = getRegionHierarchy();
+
   // Form Inputs
   const [username, setUsername] = useState('');
-  const [currentRegion, setCurrentRegion] = useState('ALL');
+  
+  // 3-level region state inputs
+  const [currentSido, setCurrentSido] = useState('ALL');
+  const [currentSigungu, setCurrentSigungu] = useState('ALL');
+  const [currentGu, setCurrentGu] = useState('ALL');
+
+  const [prefSido1, setPrefSido1] = useState('ALL');
+  const [prefSigungu1, setPrefSigungu1] = useState('ALL');
+  const [prefGu1, setPrefGu1] = useState('ALL');
+
+  const [prefSido2, setPrefSido2] = useState('ALL');
+  const [prefSigungu2, setPrefSigungu2] = useState('ALL');
+  const [prefGu2, setPrefGu2] = useState('ALL');
+
   const [residenceYears, setResidenceYears] = useState(0);
   const [age, setAge] = useState('');
-  const [prefRegion1, setPrefRegion1] = useState('ALL');
-  const [prefRegion2, setPrefRegion2] = useState('ALL');
+
+  const combineProfileRegion = (sido: string, sigungu: string, gu: string) => {
+    if (sido === 'ALL') return 'ALL';
+    let combined = sido;
+    if (sigungu !== 'ALL') {
+      combined += ' ' + sigungu;
+      if (gu !== 'ALL') {
+        combined += ' ' + gu;
+      }
+    }
+    return combined;
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -46,7 +71,6 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
         console.error(e);
       }
     }
-    // Fallback if profile not found
     onStartWithAuth(lastUser, {
       currentRegion: 'ALL',
       residenceYears: 0,
@@ -62,14 +86,17 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
       return;
     }
     
+    const combinedCurrent = combineProfileRegion(currentSido, currentSigungu, currentGu);
+    const combinedPref1 = combineProfileRegion(prefSido1, prefSigungu1, prefGu1);
+    const combinedPref2 = combineProfileRegion(prefSido2, prefSigungu2, prefGu2);
+
     const formattedProfile: UserProfileData = {
-      currentRegion,
+      currentRegion: combinedCurrent,
       residenceYears: Number(residenceYears),
       age,
-      preferredRegions: [prefRegion1, prefRegion2].filter(r => r !== 'ALL')
+      preferredRegions: [combinedPref1, combinedPref2].filter(r => r !== 'ALL')
     };
 
-    // Save profile locally
     const storedProfiles = localStorage.getItem('housing_hub_profiles');
     const profiles = storedProfiles ? JSON.parse(storedProfiles) : {};
     profiles[username.trim()] = formattedProfile;
@@ -325,21 +352,62 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>현재 거주지</label>
+                  {/* 1. 현재 거주지 (3단계) */}
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>현재 거주지</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px', marginBottom: '6px' }}>
                       <select
                         className="form-input"
-                        value={currentRegion}
-                        onChange={(e) => setCurrentRegion(e.target.value)}
-                        style={{ height: '38px', fontSize: '0.82rem', cursor: 'pointer' }}
+                        value={currentSido}
+                        onChange={(e) => {
+                          setCurrentSido(e.target.value);
+                          setCurrentSigungu('ALL');
+                          setCurrentGu('ALL');
+                        }}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
                       >
-                        <option value="ALL">전국</option>
-                        {regionsData.map(r => (
-                          <option key={r.name} value={r.name}>{r.name}</option>
+                        <option value="ALL">도 전체</option>
+                        {regionHierarchy.map(r => (
+                          <option key={r.sido} value={r.sido}>{r.sido}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-input"
+                        value={currentSigungu}
+                        disabled={currentSido === 'ALL'}
+                        onChange={(e) => {
+                          setCurrentSigungu(e.target.value);
+                          setCurrentGu('ALL');
+                        }}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <option value="ALL">시·군·구</option>
+                        {(regionHierarchy.find(r => r.sido === currentSido)?.sigunguList || []).map(s => (
+                          <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-input"
+                        value={currentGu}
+                        disabled={
+                          currentSigungu === 'ALL' || 
+                          ((regionHierarchy.find(r => r.sido === currentSido)?.sigunguList.find(s => s.sigungu === currentSigungu))?.guList.length || 0) === 0
+                        }
+                        onChange={(e) => setCurrentGu(e.target.value)}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <option value="ALL">구/읍 전체</option>
+                        {((regionHierarchy.find(r => r.sido === currentSido)?.sigunguList.find(s => s.sigungu === currentSigungu))?.guList || []).map(g => (
+                          <option key={g} value={g}>{g}</option>
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  {/* 거주 연수 & 나이 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
                       <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>거주 연수</label>
                       <input
@@ -352,47 +420,123 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
                         style={{ height: '38px', fontSize: '0.82rem' }}
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>나이 (선택)</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      placeholder="예: 28"
-                      min="0"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      style={{ height: '38px', fontSize: '0.82rem' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>선호지역 1</label>
+                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>나이 (선택)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="예: 28"
+                        min="0"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        style={{ height: '38px', fontSize: '0.82rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2. 선호지역 1 (3단계) */}
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>선호지역 1</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
                       <select
                         className="form-input"
-                        value={prefRegion1}
-                        onChange={(e) => setPrefRegion1(e.target.value)}
-                        style={{ height: '38px', fontSize: '0.82rem', cursor: 'pointer' }}
+                        value={prefSido1}
+                        onChange={(e) => {
+                          setPrefSido1(e.target.value);
+                          setPrefSigungu1('ALL');
+                          setPrefGu1('ALL');
+                        }}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
                       >
-                        <option value="ALL">없음</option>
-                        {regionsData.map(r => (
-                          <option key={r.name} value={r.name}>{r.name}</option>
+                        <option value="ALL">도 전체</option>
+                        {regionHierarchy.map(r => (
+                          <option key={r.sido} value={r.sido}>{r.sido}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-input"
+                        value={prefSigungu1}
+                        disabled={prefSido1 === 'ALL'}
+                        onChange={(e) => {
+                          setPrefSigungu1(e.target.value);
+                          setPrefGu1('ALL');
+                        }}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <option value="ALL">시·군·구</option>
+                        {(regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList || []).map(s => (
+                          <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-input"
+                        value={prefGu1}
+                        disabled={
+                          prefSigungu1 === 'ALL' || 
+                          ((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList.length || 0) === 0
+                        }
+                        onChange={(e) => setPrefGu1(e.target.value)}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <option value="ALL">구/읍 전체</option>
+                        {((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList || []).map(g => (
+                          <option key={g} value={g}>{g}</option>
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>선호지역 2</label>
+                  </div>
+
+                  {/* 3. 선호지역 2 (3단계) */}
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>선호지역 2</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
                       <select
                         className="form-input"
-                        value={prefRegion2}
-                        onChange={(e) => setPrefRegion2(e.target.value)}
-                        style={{ height: '38px', fontSize: '0.82rem', cursor: 'pointer' }}
+                        value={prefSido2}
+                        onChange={(e) => {
+                          setPrefSido2(e.target.value);
+                          setPrefSigungu2('ALL');
+                          setPrefGu2('ALL');
+                        }}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
                       >
-                        <option value="ALL">없음</option>
-                        {regionsData.map(r => (
-                          <option key={r.name} value={r.name}>{r.name}</option>
+                        <option value="ALL">도 전체</option>
+                        {regionHierarchy.map(r => (
+                          <option key={r.sido} value={r.sido}>{r.sido}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-input"
+                        value={prefSigungu2}
+                        disabled={prefSido2 === 'ALL'}
+                        onChange={(e) => {
+                          setPrefSigungu2(e.target.value);
+                          setPrefGu2('ALL');
+                        }}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <option value="ALL">시·군·구</option>
+                        {(regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList || []).map(s => (
+                          <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-input"
+                        value={prefGu2}
+                        disabled={
+                          prefSigungu2 === 'ALL' || 
+                          ((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList.length || 0) === 0
+                        }
+                        onChange={(e) => setPrefGu2(e.target.value)}
+                        style={{ height: '38px', fontSize: '0.78rem', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <option value="ALL">구/읍 전체</option>
+                        {((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList || []).map(g => (
+                          <option key={g} value={g}>{g}</option>
                         ))}
                       </select>
                     </div>
