@@ -23,6 +23,7 @@ export default function KakaoMap({ announcements, selectedId, onSelect }: KakaoM
   const markersRef = useRef<any[]>([]);
 
   const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY;
+  console.log("KakaoMap Component Rendered! Resolved apiKey:", apiKey);
 
   // Coordinate limits for Fallback interactive map
   const minLat = 37.3;
