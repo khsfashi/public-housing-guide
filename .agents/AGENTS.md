@@ -70,6 +70,10 @@
 3. **Remote Synchronization**:
    - Once a set of tasks is successfully verified and committed locally, push the changes to the remote repository (`origin/main`) to maintain team synchronization.
 
+4. **User Confirmation Before Commit**:
+   - 에이전트는 작업을 완료한 후, 변경 사항을 즉시 커밋하지 않고 사용자에게 어떤 내용이 구현되었는지 명확히 보고해야 합니다.
+   - 보고 직후 "커밋할까요?" 라고 사용자에게 질문하여 커밋 의사를 명시적으로 확인받은 후에만 `git commit` 및 `git push` 절차를 진행해야 합니다.
+
 ## 📝 Documentation & UI Formatting Constraints
 
 1. **Strictly Prohibit Redundant Expressions (Same Meaning Repetitions)**:
