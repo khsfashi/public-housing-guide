@@ -148,9 +148,12 @@ export default function DetailView({
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '15px', textDecoration: 'none' }}
+            style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '15px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
           >
-            원본 공고문 ↗
+            원본 공고
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '11px', height: '11px' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
           </a>
         </div>
 
@@ -180,7 +183,10 @@ export default function DetailView({
             }}
             className="hover-opacity"
           >
-            LH/SH 청약포털에서 바로가기 ↗
+            청약 신청 접수
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '14px', height: '14px', marginLeft: '6px' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
           </a>
         </div>
 
@@ -223,9 +229,26 @@ export default function DetailView({
                   borderColor: isBookmarked ? '#ef4444' : 'var(--border-medium)',
                   color: isBookmarked ? '#ef4444' : 'var(--text-secondary)',
                   backgroundColor: isBookmarked ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
                 }}
               >
-                {isBookmarked ? '♥ 찜 해제' : '♡ 찜하기'}
+                {isBookmarked ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#ef4444" style={{ width: '13px', height: '13px' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                    </svg>
+                    관심 해제
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '13px', height: '13px' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                    </svg>
+                    관심 등록
+                  </>
+                )}
               </button>
               <button
                 onClick={() => onToggleCompare(unit)}
@@ -275,7 +298,9 @@ export default function DetailView({
               flexDirection: 'column',
               gap: '4px'
             }}>
-              <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.76rem' }}>💡 개인 청약 우선순위 분석</span>
+              <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.76rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                개인 청약 우선순위 분석
+              </span>
               <div>
                 • 거주지 매칭: {userProfile.currentRegion && unit.region.includes(userProfile.currentRegion) ? (
                   <span style={{ color: '#10b981', fontWeight: 700 }}>당해지역 거주자 (우선공급 대상)</span>

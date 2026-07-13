@@ -1,15 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { FlatHouseUnit, ProviderType, HousingType } from '../types';
+import { FlatHouseUnit, ProviderType, HousingType, UserProfileData } from '../types';
 import { regionsData } from '../data/regions';
-
-export interface UserProfileData {
-  currentRegion: string;
-  residenceYears: number;
-  age: string;
-  preferredRegions: string[];
-}
 
 interface DashboardProps {
   filteredUnits: (FlatHouseUnit & { score?: number })[];
@@ -315,7 +308,7 @@ export default function Dashboard({
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)' }}>
-                👤 {currentUser}님 프로필
+                {currentUser}님의 맞춤 프로필
               </span>
               <button 
                 onClick={onLogout} 
@@ -461,7 +454,12 @@ export default function Dashboard({
               color: 'var(--text-primary)'
             }}
           >
-            <span>❤️ 찜한 공고 ({bookmarks.length}개)</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: '15px', height: '15px', color: '#ef4444' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+              관심 공고 ({bookmarks.length}개)
+            </span>
             <span style={{ fontSize: '0.7rem' }}>{isBookmarksOpen ? '▲' : '▼'}</span>
           </button>
           
@@ -469,7 +467,7 @@ export default function Dashboard({
             <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
               {bookmarks.length === 0 ? (
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '12px 0' }}>
-                  찜한 공고가 없습니다.<br />매물 목록의 하트(♡)를 클릭하여 추가해보세요.
+                  관심 공고가 없습니다.<br />매물 목록의 하트 아이콘을 클릭하여 추가해 보세요.
                 </div>
               ) : (
                 <>
@@ -518,9 +516,11 @@ export default function Dashboard({
                           e.stopPropagation();
                           onToggleBookmark(item);
                         }}
-                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.95rem', padding: '2px' }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        ♥
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#ef4444" style={{ width: '15px', height: '15px' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        </svg>
                       </button>
                     </div>
                   ))}
@@ -824,7 +824,7 @@ export default function Dashboard({
             onChange={(e) => setSortBy(e.target.value)}
             style={{ cursor: 'pointer', height: '32px', padding: '0 8px', fontSize: '0.75rem' }}
           >
-            {currentUser && <option value="recommendation">★ 개인 맞춤 추천순</option>}
+            {currentUser && <option value="recommendation">개인 맞춤 추천순</option>}
             <option value="latest">최신 공고 등록 순</option>
             <option value="minDeposit">최저 보증금 순</option>
             <option value="minRent">최저 월세 순</option>
@@ -903,18 +903,24 @@ export default function Dashboard({
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: bookmarks.some(b => b.id === unit.id) ? '#ef4444' : 'var(--text-tertiary)',
-                      fontSize: '1.05rem',
-                      padding: '2px 4px',
+                      padding: '4px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       transition: 'transform 0.1s'
                     }}
-                    title="찜하기"
+                    title="관심 등록"
                     className="hover-scale"
                   >
-                    {bookmarks.some(b => b.id === unit.id) ? '♥' : '♡'}
+                    {bookmarks.some(b => b.id === unit.id) ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="#ef4444" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#ef4444" style={{ width: '16px', height: '16px' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '16px', height: '16px', color: 'var(--text-tertiary)' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                      </svg>
+                    )}
                   </button>
 
                   <span className={getProviderBadgeClass(unit.provider)}>
@@ -930,7 +936,7 @@ export default function Dashboard({
                   {/* Recommendation Rank Badge */}
                   {currentUser && unit.score !== undefined && unit.score > 0 && (
                     <span className="badge" style={{ backgroundColor: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 800 }}>
-                      ★ 추천 {filteredUnits.indexOf(unit) + 1}위
+                      추천 {filteredUnits.indexOf(unit) + 1}순위
                     </span>
                   )}
                   
@@ -1017,13 +1023,16 @@ export default function Dashboard({
                       fontWeight: 700,
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '3px',
+                      gap: '4px',
                       boxShadow: 'var(--shadow-sm)',
                       transition: 'background-color 0.2s'
                     }}
                     className="hover-opacity"
                   >
-                    신청 바로가기 ↗
+                    신청 접수
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: '10px', height: '10px' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
                   </a>
                 </div>
               </div>

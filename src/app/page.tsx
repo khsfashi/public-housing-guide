@@ -1,21 +1,18 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { FlatHouseUnit, ProviderType, HousingType } from '../types';
+import { FlatHouseUnit, ProviderType, HousingType, UserProfileData } from '../types';
 import Dashboard from '../components/Dashboard';
 import KakaoMap from '../components/KakaoMap';
 import DetailView from '../components/DetailView';
 import ComparePanel from '../components/ComparePanel';
 import ThemeToggle from '../components/ThemeToggle';
-
-export interface UserProfileData {
-  currentRegion: string;
-  residenceYears: number;
-  age: string;
-  preferredRegions: string[];
-}
+import IntroScreen from '../components/IntroScreen';
 
 export default function Home() {
+  // Start Screen State
+  const [hasStarted, setHasStarted] = useState(false);
+
   // API Data States
   const [allUnits, setAllUnits] = useState<FlatHouseUnit[]>([]);
   const [apiMode, setApiMode] = useState<'live' | 'simulation'>('simulation');
@@ -472,6 +469,25 @@ export default function Home() {
   const handleClearCompare = () => {
     setCompareCart([]);
   };
+
+  if (!hasStarted) {
+    return (
+      <IntroScreen
+        onStartWithoutAuth={() => {
+          setCurrentUser(null);
+          setUserProfile(null);
+          setSortBy('latest');
+          setHasStarted(true);
+        }}
+        onStartWithAuth={(username, profile) => {
+          setCurrentUser(username);
+          setUserProfile(profile);
+          setSortBy('recommendation');
+          setHasStarted(true);
+        }}
+      />
+    );
+  }
 
   return (
     <div className={`app-container ${isDragging ? 'dragging' : ''}`}>

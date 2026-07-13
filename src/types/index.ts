@@ -78,3 +78,11 @@ export interface FlatHouseUnit {
   minDeposit: number;
   maxMonthlyRent: number;
 }
+
+export interface UserProfileData {
+  currentRegion: string;
+  residenceYears: number;
+  age: string;
+  preferredRegions: string[];
+}
+
