@@ -204,11 +204,11 @@ export default function Home() {
       {/* Header */}
       <header className="app-header">
         <div className="header-logo">
-          <div className="logo-icon">🏠</div>
+          <div className="logo-icon" style={{ display: 'none' }}></div>
           <div>
-            <span>Rental Home Finder</span>
+            <span style={{ fontWeight: 800, letterSpacing: '-0.5px' }}>Rental Home Finder</span>
             <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginLeft: '10px' }}>
-              LH · SH · 민간임대 세부 조건 비교기 (개별 주택단위 정밀 매핑)
+              LH / SH / Private Rental Condition Comparison
             </span>
           </div>
         </div>
@@ -224,8 +224,9 @@ export default function Home() {
         <section className="app-sidebar">
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' }}>
-              <div className="logo-icon animate-pulse" style={{ width: '48px', height: '48px' }}>🏠</div>
-              <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>전국 임대 주택 데이터를 로딩 중입니다...</p>
+              <div className="animate-pulse" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Loading rental housing database...
+              </div>
             </div>
           ) : (
             <Dashboard

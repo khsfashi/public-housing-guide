@@ -109,7 +109,7 @@ export default function Dashboard({
         borderBottom: '1px solid var(--border-light)'
       }}>
         <span>
-          {apiMode === 'live' ? '🟢 실시간 공공데이터 API 연동 중' : '💡 전국 청약 시뮬레이션 모드 작동 중'}
+          {apiMode === 'live' ? 'Live API Mode' : 'Simulation Mode'}
         </span>
         <span style={{ fontSize: '0.68rem', fontWeight: 500, opacity: 0.8 }}>
           {apiMode === 'live' ? 'LH/SH 실시간 공고 로딩' : '총 120개+ 전지역 매물'}
@@ -490,7 +490,7 @@ export default function Dashboard({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
                 }}>
-                  📋 {unit.announcementTitle}
+                  {unit.announcementTitle}
                 </p>
 
                 {/* Address */}

@@ -20,3 +20,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 3. **Remote Synchronization**:
    - Once a set of tasks is successfully verified and committed locally, push the changes to the remote repository (`origin/main`) to maintain team synchronization.
+
+# Documentation & UI Formatting Constraints
+
+1. **Strictly Prohibit Redundant Expressions (Same Meaning Repetitions)**:
+   - Never write redundant terms representing the exact same meaning side-by-side (e.g., avoid "시작하기 (Getting Started)", "전설의 레전드", "역전의 역전"). Use one clean representation (preferably English for technical titles, such as simply "Getting Started" or "Setup").
+   
+2. **Minimize Emojis & Childish Embellishments**:
+   - Do not use colorful or excessive emojis (e.g., 🚀, 🟢, 💡, 📍, 📋) in the UI code, documentation, or response messages. Maintain a professional, clean, and premium typography-oriented look.

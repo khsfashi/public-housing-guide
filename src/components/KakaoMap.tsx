@@ -219,23 +219,20 @@ export default function KakaoMap({ units, selectedUnitId, onSelectUnit }: KakaoM
         }}>
           {isKeyMissing ? (
             <>
-              <h4 style={{ color: 'var(--primary)', marginBottom: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="logo-icon" style={{ width: '16px', height: '16px', fontSize: '0.55rem' }}>i</span>
-                인터랙티브 가상 지도 렌더링 중
+              <h4 style={{ color: 'var(--primary)', marginBottom: '4px', fontSize: '0.85rem', margin: 0 }}>
+                Interactive Virtual Map Active
               </h4>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                현재 Kakao Maps API 키가 부재하여 가상 지도로 대체 동작 중입니다. 
-                <code> .env.local</code>에 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>를 등록하면 실제 카카오맵을 로드합니다.
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginTop: '4px' }}>
+                Kakao Maps SDK key is not configured. Falling back to the offline interactive map. Add <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code> to <code>.env.local</code> to load the live map.
               </p>
             </>
           ) : (
             <>
-              <h4 style={{ color: '#ef4444', marginBottom: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="logo-icon" style={{ width: '16px', height: '16px', fontSize: '0.55rem', background: '#ef4444' }}>!</span>
-                카카오 지도 API 키 오류
+              <h4 style={{ color: '#ef4444', marginBottom: '4px', fontSize: '0.85rem', margin: 0 }}>
+                Kakao Maps API Key Notice
               </h4>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                카카오 지도 SDK 로딩 에러(403)입니다. [카카오 디벨로퍼스 > 플랫폼 > Web]에 실제 배포 도메인(<code>https://public-housing-guide.vercel.app</code>) 또는 로컬 도메인(<code>localhost:3000</code>)이 정확히 등록되어 있는지 확인해 주세요.
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginTop: '4px' }}>
+                SDK loading failed (403). Make sure your Javascript App Key and the deployment domain (<code>https://public-housing-guide.vercel.app</code>) are registered in Kakao Developers console.
               </p>
             </>
           )}

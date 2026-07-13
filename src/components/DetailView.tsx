@@ -108,7 +108,7 @@ export default function DetailView({
             {unit.unitName}
           </h2>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-            📍 {unit.address}
+            {unit.address}
           </p>
         </div>
         <button onClick={onClose} className="btn-icon" style={{ fontSize: '1.2rem', padding: '6px' }} title="닫기">
@@ -166,7 +166,7 @@ export default function DetailView({
             }}
             className="hover-opacity"
           >
-            🚀 실제 주택 청약 신청하기 (LH/SH 바로가기) ↗
+            Apply on LH/SH Portal ↗
           </a>
         </div>
 
@@ -179,12 +179,12 @@ export default function DetailView({
           fontSize: '0.8rem'
         }}>
           <h4 style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px', fontSize: '0.82rem' }}>
-            소속 모집 공고 정보
+            Announcement Details
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', color: 'var(--text-secondary)' }}>
-            <div><strong>공고명:</strong> {unit.announcementTitle}</div>
-            <div><strong>공고일자:</strong> {unit.announcementDate}</div>
-            <div><strong>접수기한:</strong> {unit.deadlineDate} ({unit.status})</div>
+            <div><strong>Title:</strong> {unit.announcementTitle}</div>
+            <div><strong>Announced:</strong> {unit.announcementDate}</div>
+            <div><strong>Deadline:</strong> {unit.deadlineDate} ({unit.status})</div>
           </div>
         </div>
 
@@ -244,8 +244,7 @@ export default function DetailView({
           gap: '14px'
         }}>
           <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="logo-icon" style={{ width: '18px', height: '18px', fontSize: '0.6rem' }}>%</span>
-            보증금 ↔ 월세 상호전환 모의 계산기
+            Deposit-to-Rent Conversion Simulator
           </h3>
 
           {/* Price Slider */}
@@ -302,18 +301,14 @@ export default function DetailView({
             }}>
               {customDeposit > unit.deposit ? (
                 <div>
-                  💡 보증금을 <strong>{formatPrice(customDeposit - unit.deposit)}</strong> 늘려 
-                  월세를 매월 <strong>{formatPrice(unit.monthlyRent - simulatedRent)}</strong> 절감합니다. 
-                  (연 전환이율 6.0% 적용)
+                  Notice: Increasing deposit by {formatPrice(customDeposit - unit.deposit)} reduces monthly rent by {formatPrice(unit.monthlyRent - simulatedRent)} (6.0% annual conversion applied).
                 </div>
               ) : customDeposit < unit.deposit ? (
                 <div>
-                  💡 보증금을 <strong>{formatPrice(unit.deposit - customDeposit)}</strong> 감액하는 대신 
-                  월세가 매월 <strong>{formatPrice(simulatedRent - unit.monthlyRent)}</strong> 증가합니다. 
-                  (연 전환이율 3.5% 적용)
+                  Notice: Lowering deposit by {formatPrice(unit.deposit - customDeposit)} increases monthly rent by {formatPrice(simulatedRent - unit.monthlyRent)} (3.5% annual conversion applied).
                 </div>
               ) : (
-                <div>💡 현재 기본 임대조건 상태입니다. 슬라이더를 조정하여 상호전환 모의 계산을 수행해보세요.</div>
+                <div>Notice: Showing baseline terms. Drag the slider to simulate adjustments.</div>
               )}
             </div>
           </div>
