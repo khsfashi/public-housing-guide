@@ -108,41 +108,10 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
 
       {/* Comparison Modal Overlay */}
       {isModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-lg)',
-            width: '100%',
-            maxWidth: '1000px',
-            maxHeight: '90vh',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: 'var(--shadow-premium)',
-            border: '1px solid var(--border-light)',
-            overflow: 'hidden',
-          }}>
+        <div className="compare-modal-overlay">
+          <div className="compare-modal-content">
             {/* Modal Header */}
-            <div style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid var(--border-light)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: 'var(--bg-secondary)'
-            }}>
+            <div className="compare-modal-header">
               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                 임대 조건 비교표
               </h2>
@@ -156,7 +125,7 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
             </div>
 
             {/* Modal Content - Table */}
-            <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', padding: '24px' }}>
+            <div className="compare-modal-body">
               <table style={{
                 width: '100%',
                 borderCollapse: 'collapse',

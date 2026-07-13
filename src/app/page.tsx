@@ -13,6 +13,10 @@ export default function Home() {
   // Start Screen State
   const [hasStarted, setHasStarted] = useState(false);
 
+  // Responsive Layout States
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'list' | 'map'>('list');
+
   // API Data States
   const [allUnits, setAllUnits] = useState<FlatHouseUnit[]>([]);
   const [apiMode, setApiMode] = useState<'live' | 'simulation'>('simulation');
@@ -66,6 +70,13 @@ export default function Home() {
 
   // Fetch data on mount
   useEffect(() => {
+    // Detect mobile size
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     async function fetchData() {
       try {
         const res = await fetch('/api/announcements');
@@ -105,6 +116,10 @@ export default function Home() {
         }
       }
     }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   // Handle profile and bookmark changes when user logs in or out
@@ -638,7 +653,13 @@ export default function Home() {
       {/* Main Layout */}
       <main className="app-main">
         {/* Sidebar Filter & List */}
-        <section className="app-sidebar" style={{ width: sidebarWidth }}>
+        <section 
+          className="app-sidebar" 
+          style={{ 
+            width: isMobile ? '100%' : sidebarWidth,
+            display: isMobile && mobileTab !== 'list' ? 'none' : 'flex'
+          }}
+        >
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' }}>
               <div className="animate-pulse" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
@@ -690,10 +711,17 @@ export default function Home() {
         </section>
 
         {/* Dynamic Resize Splitter Handle */}
-        <div className="resize-handle" onMouseDown={startResizing} />
+        {!isMobile && (
+          <div className="resize-handle" onMouseDown={startResizing} />
+        )}
 
         {/* Map View */}
-        <section className="app-map-area">
+        <section 
+          className="app-map-area"
+          style={{
+            display: isMobile && mobileTab !== 'map' ? 'none' : undefined
+          }}
+        >
           <KakaoMap
             units={filteredUnits}
             selectedUnitId={selectedUnitId}
@@ -722,6 +750,24 @@ export default function Home() {
           />
         </section>
       </main>
+
+      {/* Floating Bottom Tab Bar for Mobile */}
+      {isMobile && (
+        <div className="mobile-floating-tabs">
+          <button 
+            className={`mobile-tab-btn ${mobileTab === 'list' ? 'active' : ''}`}
+            onClick={() => setMobileTab('list')}
+          >
+            목록 보기
+          </button>
+          <button 
+            className={`mobile-tab-btn ${mobileTab === 'map' ? 'active' : ''}`}
+            onClick={() => setMobileTab('map')}
+          >
+            지도 보기
+          </button>
+        </div>
+      )}
     </div>
   );
 }
