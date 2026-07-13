@@ -103,6 +103,7 @@ export default function Dashboard({
   const [usernameInput, setUsernameInput] = useState('');
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'search' | 'bookmarks'>('search');
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
 
   const regionHierarchy = getRegionHierarchy();
 
@@ -389,6 +390,49 @@ export default function Dashboard({
   // Get active Gu options based on selected Sigungu
   const activeGuList = activeSigunguList.find(s => s.sigungu === selectedSigungu)?.guList || [];
 
+  // Get filter summary text for collapsed view
+  const getFilterSummaryText = () => {
+    const parts = [];
+    
+    // Region
+    if (selectedSido !== 'ALL') {
+      let regionStr = selectedSido;
+      if (selectedSigungu !== 'ALL') {
+        regionStr += ` ${selectedSigungu}`;
+        if (selectedGu !== 'ALL') {
+          regionStr += ` ${selectedGu}`;
+        }
+      }
+      parts.push(regionStr);
+    } else {
+      parts.push('전체 지역');
+    }
+    
+    // Pyeong size
+    parts.push(`${minPyeong}~${maxPyeong === 45 ? '무제한' : `${maxPyeong}평`}`);
+    
+    // Deposit
+    parts.push(`보증금 ${formatPrice(minDeposit)}~${maxDeposit === 800000000 ? '무제한' : formatPrice(maxDeposit)}`);
+
+    // Monthly Rent
+    if (minMonthlyRent > 0 || maxMonthlyRent < 2000000) {
+      parts.push(`월세 ${formatPrice(minMonthlyRent)}~${maxMonthlyRent === 2000000 ? '무제한' : formatPrice(maxMonthlyRent)}`);
+    }
+
+    // Sort order
+    const sortLabels: Record<string, string> = {
+      recommendation: '추천순',
+      latest: '최신순',
+      minDeposit: '최저보증금순',
+      minRent: '최저월세순',
+      maxArea: '넓은평수순',
+      deadline: '마감임박순'
+    };
+    parts.push(sortLabels[sortBy] || '정렬');
+    
+    return parts.join(' · ');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
       
@@ -430,407 +474,436 @@ export default function Dashboard({
 
       {/* Search and Filters Section */}
       {activeTab === 'search' && (
-        <div style={{
-          padding: '18px 20px',
-          borderBottom: '1px solid var(--border-light)',
-          backgroundColor: 'var(--bg-secondary)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px',
-          maxHeight: '65%',
-          overflowY: 'auto'
-        }}>
-          {/* Auth / Personalization Section */}
-          {currentUser === null ? (
+        <>
+          {isFiltersExpanded ? (
             <div style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px 14px',
-              border: '1px solid var(--border-light)'
-            }}>
-              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>개인 맞춤 설정</span>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>로그인/회원가입</span>
-                </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="사용자명 입력..."
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    style={{ height: '32px', fontSize: '0.75rem', padding: '0 8px' }}
-                  />
-                  <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: '32px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)' }}>
-                    확인
-                  </button>
-                </div>
-                <p style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: '1.3', margin: 0 }}>
-                  ※ 이름 입력 시 기존에 저장된 선호지역, 거주기간 등 개인화 설정이 자동으로 로드됩니다.
-                </p>
-              </form>
-            </div>
-          ) : (
-            <div style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderRadius: 'var(--radius-md)',
-              padding: '14px 16px',
-              border: '1.5px solid var(--primary-light)',
+              padding: '18px 20px',
+              borderBottom: '1px solid var(--border-light)',
+              backgroundColor: 'var(--bg-secondary)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '14px',
+              maxHeight: '65%',
+              overflowY: 'auto'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 850, color: 'var(--primary)' }}>
-                  {currentUser}님의 맞춤 프로필
+              {/* Auth / Personalization Section */}
+              {currentUser === null ? (
+                <div style={{
+                  backgroundColor: 'var(--bg-primary)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '12px 14px',
+                  border: '1px solid var(--border-light)'
+                }}>
+                  <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>개인 맞춤 설정</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>로그인/회원가입</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="사용자명 입력..."
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
+                        style={{ height: '32px', fontSize: '0.75rem', padding: '0 8px' }}
+                      />
+                      <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: '32px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)' }}>
+                        확인
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: '1.3', margin: 0 }}>
+                      ※ 이름 입력 시 기존에 저장된 선호지역, 거주기간 등 개인화 설정이 자동으로 로드됩니다.
+                    </p>
+                  </form>
+                </div>
+              ) : (
+                <div style={{
+                  backgroundColor: 'var(--bg-primary)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '14px 16px',
+                  border: '1.5px solid var(--primary-light)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 850, color: 'var(--primary)' }}>
+                      {currentUser}님의 맞춤 프로필
+                    </span>
+                    <button 
+                      onClick={confirmLogout} 
+                      style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div><strong>거주지:</strong> {userProfile?.currentRegion === 'ALL' ? '전국' : userProfile?.currentRegion} ({userProfile?.residenceYears || 0}년 거주)</div>
+                    <div><strong>선호 지역:</strong> {userProfile?.preferredRegions && userProfile.preferredRegions.length > 0 ? userProfile.preferredRegions.join(', ') : '미지정'}</div>
+                    <div><strong>나이:</strong> {userProfile?.age ? `${userProfile.age}세` : '미입력'}</div>
+                    <button 
+                      onClick={openEditProfile}
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 10px', fontSize: '0.72rem', marginTop: '6px', width: '100%', height: '28px', borderRadius: '4px' }}
+                    >
+                      프로필 수정 및 상세 조건 설정
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Target Recommendation Category Presets */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>유형별 맞춤 추천 테마</label>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'youth', label: '청년 추천' },
+                    { id: 'newlywed', label: '신혼부부 추천' },
+                    { id: 'multichild', label: '다자녀 추천' },
+                    { id: 'senior', label: '고령자 추천' }
+                  ].map(preset => {
+                    const active = activePreset === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        onClick={() => applyPreset(preset.id as any)}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '15px',
+                          border: `1.2px solid ${active ? 'var(--primary)' : 'var(--border-medium)'}`,
+                          backgroundColor: active ? 'var(--primary-light)' : 'var(--bg-secondary)',
+                          color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                        className="hover-scale"
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Search Input */}
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="주택명, 공고명 또는 상세 주소 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ paddingLeft: '38px', height: '38px' }}
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '16px',
+                    height: '16px',
+                    color: 'var(--text-tertiary)'
+                  }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.602Z" />
+                </svg>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-tertiary)'
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* 3-Level Cascading Region Filter */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>시·도</label>
+                  <select
+                    className="form-input"
+                    value={selectedSido}
+                    onChange={(e) => {
+                      setSelectedSido(e.target.value);
+                      setSelectedSigungu('ALL');
+                      setSelectedGu('ALL');
+                    }}
+                    style={{ cursor: 'pointer', height: '36px', padding: '0 4px', fontSize: '0.78rem' }}
+                  >
+                    <option value="ALL">전체</option>
+                    {regionHierarchy.map(r => (
+                      <option key={r.sido} value={r.sido}>{r.sido}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>시·군·구</label>
+                  <select
+                    className="form-input"
+                    value={selectedSigungu}
+                    disabled={selectedSido === 'ALL'}
+                    onChange={(e) => {
+                      setSelectedSigungu(e.target.value);
+                      setSelectedGu('ALL');
+                    }}
+                    style={{ cursor: 'pointer', height: '36px', padding: '0 4px', fontSize: '0.78rem' }}
+                  >
+                    <option value="ALL">전체</option>
+                    {activeSigunguList.map(s => (
+                      <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>구/군</label>
+                  <select
+                    className="form-input"
+                    value={selectedGu}
+                    disabled={selectedSigungu === 'ALL' || activeGuList.length === 0}
+                    onChange={(e) => setSelectedGu(e.target.value)}
+                    style={{ cursor: 'pointer', height: '36px', padding: '0 4px', fontSize: '0.78rem' }}
+                  >
+                    <option value="ALL">전체</option>
+                    {activeGuList.map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Provider Filters */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>공급 주체</label>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {(['LH', 'SH', 'PRIVATE'] as ProviderType[]).map(prov => {
+                    const active = selectedProviders.has(prov);
+                    let color = 'var(--lh-color)';
+                    let bg = 'var(--lh-bg)';
+                    if (prov === 'SH') { color = 'var(--sh-color)'; bg = 'var(--sh-bg)'; }
+                    else if (prov === 'PRIVATE') { color = 'var(--private-color)'; bg = 'var(--private-bg)'; }
+
+                    return (
+                      <button
+                        key={prov}
+                        onClick={() => toggleProvider(prov)}
+                        style={{
+                          padding: '5px 10px',
+                          borderRadius: '15px',
+                          border: `1.2px solid ${active ? color : 'var(--border-light)'}`,
+                          backgroundColor: active ? bg : 'var(--bg-secondary)',
+                          color: active ? color : 'var(--text-secondary)',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {prov === 'PRIVATE' ? '민간임대' : prov}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Housing Type Filters (Include 매입임대) */}
+              <div>
+                <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>주택 유형</label>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxHeight: '72px', overflowY: 'auto', padding: '2px' }}>
+                  {(['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운'] as HousingType[]).map(type => {
+                    const active = selectedHousingTypes.has(type);
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => toggleHousingType(type)}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-medium)',
+                          backgroundColor: active ? 'var(--primary)' : 'var(--bg-primary)',
+                          color: active ? '#ffffff' : 'var(--text-secondary)',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Range Controls for Prices & Area */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
+                
+                {/* Pyeong Size Filter */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>전용 평수</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
+                      {minPyeong}평 ~ {maxPyeong === 45 ? '45평 이상' : `${maxPyeong}평`}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      className="form-input"
+                      value={minPyeong}
+                      onChange={(e) => setMinPyeong(Number(e.target.value))}
+                      style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
+                    >
+                      {[0, 5, 10, 15, 20, 25, 30, 35, 40].map(p => (
+                        <option key={p} value={p}>{p}평</option>
+                      ))}
+                    </select>
+                    <span style={{ color: 'var(--text-tertiary)' }}>~</span>
+                    <select
+                      className="form-input"
+                      value={maxPyeong}
+                      onChange={(e) => setMaxPyeong(Number(e.target.value))}
+                      style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
+                    >
+                      {[5, 10, 15, 20, 25, 30, 35, 40, 45].map(p => (
+                        <option key={p} value={p}>{p === 45 ? '무제한' : `${p}평`}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Deposit Range Filter */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>임대 보증금 범위</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
+                      {formatPrice(minDeposit)} ~ {maxDeposit === 800000000 ? '무제한' : formatPrice(maxDeposit)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      className="form-input"
+                      value={minDeposit}
+                      onChange={(e) => setMinDeposit(Number(e.target.value))}
+                      style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
+                    >
+                      {[0, 5000000, 10000000, 20000000, 50000000, 100000000, 200000000, 300000000, 500000000].map(d => (
+                        <option key={d} value={d}>{d === 0 ? '0원' : formatPrice(d)}</option>
+                      ))}
+                    </select>
+                    <span style={{ color: 'var(--text-tertiary)' }}>~</span>
+                    <select
+                      className="form-input"
+                      value={maxDeposit}
+                      onChange={(e) => setMaxDeposit(Number(e.target.value))}
+                      style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
+                    >
+                      {[10000000, 20000000, 50000000, 100000000, 200000000, 300000000, 500000000, 800000000].map(d => (
+                        <option key={d} value={d}>{d === 800000000 ? '무제한' : formatPrice(d)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Monthly Rent Range Filter */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>월 임대료 범위</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
+                      {formatPrice(minMonthlyRent)} ~ {maxMonthlyRent === 2000000 ? '무제한' : formatPrice(maxMonthlyRent)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      className="form-input"
+                      value={minMonthlyRent}
+                      onChange={(e) => setMinMonthlyRent(Number(e.target.value))}
+                      style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
+                    >
+                      {[0, 50000, 100000, 200000, 300000, 500000, 800000, 1200000].map(r => (
+                        <option key={r} value={r}>{r === 0 ? '없음' : formatPrice(r)}</option>
+                      ))}
+                    </select>
+                    <span style={{ color: 'var(--text-tertiary)' }}>~</span>
+                    <select
+                      className="form-input"
+                      value={maxMonthlyRent}
+                      onChange={(e) => setMaxMonthlyRent(Number(e.target.value))}
+                      style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
+                    >
+                      {[100000, 200000, 300000, 500000, 800000, 1200000, 1500000, 2000000].map(r => (
+                        <option key={r} value={r}>{r === 2000000 ? '무제한' : formatPrice(r)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sorting Selection */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>정렬 기준</label>
+                <select
+                  className="form-input"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{ cursor: 'pointer', height: '32px', padding: '0 8px', fontSize: '0.75rem' }}
+                >
+                  {currentUser && <option value="recommendation">개인 맞춤 추천순</option>}
+                  <option value="latest">최신 공고 등록 순</option>
+                  <option value="minDeposit">최저 보증금 순</option>
+                  <option value="minRent">최저 월세 순</option>
+                  <option value="maxArea">넓은 면적(평수) 순</option>
+                  <option value="deadline">마감 임박 순</option>
+                </select>
+              </div>
+
+              {/* Fold Filters Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setIsFiltersExpanded(false)}
+                className="filter-toggle-btn"
+              >
+                필터 조건 접기 ▲
+              </button>
+            </div>
+          ) : (
+            /* Summary Bar when filters are folded */
+            <div className="filter-summary-bar">
+              <div className="filter-summary-text-container">
+                <span className="filter-summary-text" title={getFilterSummaryText()}>
+                  {getFilterSummaryText()}
                 </span>
-                <button 
-                  onClick={confirmLogout} 
-                  style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  로그아웃
-                </button>
               </div>
-
-              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div><strong>거주지:</strong> {userProfile?.currentRegion === 'ALL' ? '전국' : userProfile?.currentRegion} ({userProfile?.residenceYears || 0}년 거주)</div>
-                <div><strong>선호 지역:</strong> {userProfile?.preferredRegions && userProfile.preferredRegions.length > 0 ? userProfile.preferredRegions.join(', ') : '미지정'}</div>
-                <div><strong>나이:</strong> {userProfile?.age ? `${userProfile.age}세` : '미입력'}</div>
-                <button 
-                  onClick={openEditProfile}
-                  className="btn btn-secondary"
-                  style={{ padding: '4px 10px', fontSize: '0.72rem', marginTop: '6px', width: '100%', height: '28px', borderRadius: '4px' }}
-                >
-                  프로필 수정 및 상세 조건 설정
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsFiltersExpanded(true)}
+                className="filter-summary-btn"
+              >
+                필터 펼치기 ▼
+              </button>
             </div>
           )}
-
-        {/* Target Recommendation Category Presets */}
-        <div>
-          <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>유형별 맞춤 추천 테마</label>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {[
-              { id: 'youth', label: '청년 추천' },
-              { id: 'newlywed', label: '신혼부부 추천' },
-              { id: 'multichild', label: '다자녀 추천' },
-              { id: 'senior', label: '고령자 추천' }
-            ].map(preset => {
-              const active = activePreset === preset.id;
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => applyPreset(preset.id as any)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '15px',
-                    border: `1.2px solid ${active ? 'var(--primary)' : 'var(--border-medium)'}`,
-                    backgroundColor: active ? 'var(--primary-light)' : 'var(--bg-secondary)',
-                    color: active ? 'var(--primary)' : 'var(--text-secondary)',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                  className="hover-scale"
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Search Input */}
-        <div style={{ position: 'relative' }}>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="주택명, 공고명 또는 상세 주소 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ paddingLeft: '38px', height: '38px' }}
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '16px',
-              height: '16px',
-              color: 'var(--text-tertiary)'
-            }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.602Z" />
-          </svg>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              style={{
-                position: 'absolute',
-                right: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--text-tertiary)'
-              }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        {/* 3-Level Cascading Region Filter */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: '6px' }}>
-          <div>
-            <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>시·도</label>
-            <select
-              className="form-input"
-              value={selectedSido}
-              onChange={(e) => {
-                setSelectedSido(e.target.value);
-                setSelectedSigungu('ALL');
-                setSelectedGu('ALL');
-              }}
-              style={{ cursor: 'pointer', height: '36px', padding: '0 4px', fontSize: '0.78rem' }}
-            >
-              <option value="ALL">전체</option>
-              {regionHierarchy.map(r => (
-                <option key={r.sido} value={r.sido}>{r.sido}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>시·군·구</label>
-            <select
-              className="form-input"
-              value={selectedSigungu}
-              disabled={selectedSido === 'ALL'}
-              onChange={(e) => {
-                setSelectedSigungu(e.target.value);
-                setSelectedGu('ALL');
-              }}
-              style={{ cursor: 'pointer', height: '36px', padding: '0 4px', fontSize: '0.78rem' }}
-            >
-              <option value="ALL">전체</option>
-              {activeSigunguList.map(s => (
-                <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>구/군</label>
-            <select
-              className="form-input"
-              value={selectedGu}
-              disabled={selectedSigungu === 'ALL' || activeGuList.length === 0}
-              onChange={(e) => setSelectedGu(e.target.value)}
-              style={{ cursor: 'pointer', height: '36px', padding: '0 4px', fontSize: '0.78rem' }}
-            >
-              <option value="ALL">전체</option>
-              {activeGuList.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Provider Filters */}
-        <div>
-          <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>공급 주체</label>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {(['LH', 'SH', 'PRIVATE'] as ProviderType[]).map(prov => {
-              const active = selectedProviders.has(prov);
-              let color = 'var(--lh-color)';
-              let bg = 'var(--lh-bg)';
-              if (prov === 'SH') { color = 'var(--sh-color)'; bg = 'var(--sh-bg)'; }
-              else if (prov === 'PRIVATE') { color = 'var(--private-color)'; bg = 'var(--private-bg)'; }
-
-              return (
-                <button
-                  key={prov}
-                  onClick={() => toggleProvider(prov)}
-                  style={{
-                    padding: '5px 10px',
-                    borderRadius: '15px',
-                    border: `1.2px solid ${active ? color : 'var(--border-light)'}`,
-                    backgroundColor: active ? bg : 'var(--bg-secondary)',
-                    color: active ? color : 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {prov === 'PRIVATE' ? '민간임대' : prov}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Housing Type Filters (Include 매입임대) */}
-        <div>
-          <label className="form-label" style={{ fontSize: '0.72rem', marginBottom: '4px' }}>주택 유형</label>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxHeight: '72px', overflowY: 'auto', padding: '2px' }}>
-            {(['매입임대', '행복주택', '국민임대', '공공임대', '영구임대', '장기전세', '민간임대', '신혼희망타운'] as HousingType[]).map(type => {
-              const active = selectedHousingTypes.has(type);
-              return (
-                <button
-                  key={type}
-                  onClick={() => toggleHousingType(type)}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border-medium)',
-                    backgroundColor: active ? 'var(--primary)' : 'var(--bg-primary)',
-                    color: active ? '#ffffff' : 'var(--text-secondary)',
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {type}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Range Controls for Prices & Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
-          
-          {/* Pyeong Size Filter */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>전용 평수</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
-                {minPyeong}평 ~ {maxPyeong === 45 ? '45평 이상' : `${maxPyeong}평`}
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select
-                className="form-input"
-                value={minPyeong}
-                onChange={(e) => setMinPyeong(Number(e.target.value))}
-                style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
-              >
-                {[0, 5, 10, 15, 20, 25, 30, 35, 40].map(p => (
-                  <option key={p} value={p}>{p}평</option>
-                ))}
-              </select>
-              <span style={{ color: 'var(--text-tertiary)' }}>~</span>
-              <select
-                className="form-input"
-                value={maxPyeong}
-                onChange={(e) => setMaxPyeong(Number(e.target.value))}
-                style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
-              >
-                {[5, 10, 15, 20, 25, 30, 35, 40, 45].map(p => (
-                  <option key={p} value={p}>{p === 45 ? '무제한' : `${p}평`}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Deposit Range Filter */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>임대 보증금 범위</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
-                {formatPrice(minDeposit)} ~ {maxDeposit === 800000000 ? '무제한' : formatPrice(maxDeposit)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select
-                className="form-input"
-                value={minDeposit}
-                onChange={(e) => setMinDeposit(Number(e.target.value))}
-                style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
-              >
-                {[0, 5000000, 10000000, 20000000, 50000000, 100000000, 200000000, 300000000, 500000000].map(d => (
-                  <option key={d} value={d}>{d === 0 ? '0원' : formatPrice(d)}</option>
-                ))}
-              </select>
-              <span style={{ color: 'var(--text-tertiary)' }}>~</span>
-              <select
-                className="form-input"
-                value={maxDeposit}
-                onChange={(e) => setMaxDeposit(Number(e.target.value))}
-                style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
-              >
-                {[10000000, 20000000, 50000000, 100000000, 200000000, 300000000, 500000000, 800000000].map(d => (
-                  <option key={d} value={d}>{d === 800000000 ? '무제한' : formatPrice(d)}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Monthly Rent Range Filter */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>월 임대료 범위</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>
-                {formatPrice(minMonthlyRent)} ~ {maxMonthlyRent === 2000000 ? '무제한' : formatPrice(maxMonthlyRent)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select
-                className="form-input"
-                value={minMonthlyRent}
-                onChange={(e) => setMinMonthlyRent(Number(e.target.value))}
-                style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
-              >
-                {[0, 50000, 100000, 200000, 300000, 500000, 800000, 1200000].map(r => (
-                  <option key={r} value={r}>{r === 0 ? '없음' : formatPrice(r)}</option>
-                ))}
-              </select>
-              <span style={{ color: 'var(--text-tertiary)' }}>~</span>
-              <select
-                className="form-input"
-                value={maxMonthlyRent}
-                onChange={(e) => setMaxMonthlyRent(Number(e.target.value))}
-                style={{ height: '32px', fontSize: '0.75rem', padding: '0 4px' }}
-              >
-                {[100000, 200000, 300000, 500000, 800000, 1200000, 1500000, 2000000].map(r => (
-                  <option key={r} value={r}>{r === 2000000 ? '무제한' : formatPrice(r)}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Sorting Selection */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <label className="form-label" style={{ fontSize: '0.72rem', margin: 0 }}>정렬 기준</label>
-          <select
-            className="form-input"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={{ cursor: 'pointer', height: '32px', padding: '0 8px', fontSize: '0.75rem' }}
-          >
-            {currentUser && <option value="recommendation">개인 맞춤 추천순</option>}
-            <option value="latest">최신 공고 등록 순</option>
-            <option value="minDeposit">최저 보증금 순</option>
-            <option value="minRent">최저 월세 순</option>
-            <option value="maxArea">넓은 면적(평수) 순</option>
-            <option value="deadline">마감 임박 순</option>
-          </select>
-        </div>
-      </div>
+        </>
       )}
 
       {/* Bookmarks (찜 목록) Tab Header & Simulation */}
