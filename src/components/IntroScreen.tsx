@@ -24,13 +24,40 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
   const [currentSigungu, setCurrentSigungu] = useState('ALL');
   const [currentGu, setCurrentGu] = useState('ALL');
 
-  const [prefSido1, setPrefSido1] = useState('ALL');
-  const [prefSigungu1, setPrefSigungu1] = useState('ALL');
-  const [prefGu1, setPrefGu1] = useState('ALL');
+  interface PreferredRegionInput {
+    sido: string;
+    sigungu: string;
+    gu: string;
+  }
+  const [preferredRegions, setPreferredRegions] = useState<PreferredRegionInput[]>([
+    { sido: 'ALL', sigungu: 'ALL', gu: 'ALL' }
+  ]);
 
-  const [prefSido2, setPrefSido2] = useState('ALL');
-  const [prefSigungu2, setPrefSigungu2] = useState('ALL');
-  const [prefGu2, setPrefGu2] = useState('ALL');
+  const handleAddPreferredRegion = () => {
+    setPreferredRegions(prev => [...prev, { sido: 'ALL', sigungu: 'ALL', gu: 'ALL' }]);
+  };
+
+  const handleRemovePreferredRegion = (index: number) => {
+    if (preferredRegions.length <= 1) {
+      setPreferredRegions([{ sido: 'ALL', sigungu: 'ALL', gu: 'ALL' }]);
+      return;
+    }
+    setPreferredRegions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePreferredRegionChange = (index: number, field: 'sido' | 'sigungu' | 'gu', value: string) => {
+    setPreferredRegions(prev => prev.map((item, i) => {
+      if (i !== index) return item;
+      const updated = { ...item, [field]: value };
+      if (field === 'sido') {
+        updated.sigungu = 'ALL';
+        updated.gu = 'ALL';
+      } else if (field === 'sigungu') {
+        updated.gu = 'ALL';
+      }
+      return updated;
+    }));
+  };
 
   const [residenceYears, setResidenceYears] = useState(0);
   const [age, setAge] = useState('');
@@ -87,14 +114,15 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
     }
     
     const combinedCurrent = combineProfileRegion(currentSido, currentSigungu, currentGu);
-    const combinedPref1 = combineProfileRegion(prefSido1, prefSigungu1, prefGu1);
-    const combinedPref2 = combineProfileRegion(prefSido2, prefSigungu2, prefGu2);
+    const combinedPrefs = preferredRegions
+      .map(region => combineProfileRegion(region.sido, region.sigungu, region.gu))
+      .filter(r => r !== 'ALL');
 
     const formattedProfile: UserProfileData = {
       currentRegion: combinedCurrent,
       residenceYears: Number(residenceYears),
       age,
-      preferredRegions: [combinedPref1, combinedPref2].filter(r => r !== 'ALL')
+      preferredRegions: combinedPrefs
     };
 
     const storedProfiles = localStorage.getItem('housing_hub_profiles');
@@ -309,105 +337,79 @@ export default function IntroScreen({ onStartWithoutAuth, onStartWithAuth }: Int
                   </div>
 
                   {/* 2. 선호지역 1 (3단계) */}
-                  <div className="form-group-compact">
-                    <label className="form-label-compact">선호지역 1</label>
-                    <div className="region-select-grid">
-                      <select
-                        className="form-input select-compact"
-                        value={prefSido1}
-                        onChange={(e) => {
-                          setPrefSido1(e.target.value);
-                          setPrefSigungu1('ALL');
-                          setPrefGu1('ALL');
-                        }}
+                  {/* 선호지역 동적 설정 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                      <label className="form-label-compact" style={{ margin: 0 }}>선호 지역 설정</label>
+                      <button
+                        type="button"
+                        onClick={handleAddPreferredRegion}
+                        className="btn-add-region"
                       >
-                        <option value="ALL">도 전체</option>
-                        {regionHierarchy.map(r => (
-                          <option key={r.sido} value={r.sido}>{r.sido}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        className="form-input select-compact"
-                        value={prefSigungu1}
-                        disabled={prefSido1 === 'ALL'}
-                        onChange={(e) => {
-                          setPrefSigungu1(e.target.value);
-                          setPrefGu1('ALL');
-                        }}
-                      >
-                        <option value="ALL">시·군·구</option>
-                        {(regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList || []).map(s => (
-                          <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        className="form-input select-compact"
-                        value={prefGu1}
-                        disabled={
-                          prefSigungu1 === 'ALL' || 
-                          ((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList.length || 0) === 0
-                        }
-                        onChange={(e) => setPrefGu1(e.target.value)}
-                      >
-                        <option value="ALL">구/읍 전체</option>
-                        {((regionHierarchy.find(r => r.sido === prefSido1)?.sigunguList.find(s => s.sigungu === prefSigungu1))?.guList || []).map(g => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
-                      </select>
+                        + 지역 추가
+                      </button>
                     </div>
-                  </div>
+                    
+                    {preferredRegions.map((region, index) => {
+                      const sigunguList = regionHierarchy.find(r => r.sido === region.sido)?.sigunguList || [];
+                      const guList = sigunguList.find(s => s.sigungu === region.sigungu)?.guList || [];
+                      
+                      return (
+                        <div key={index} className="region-select-row-container">
+                          <div className="region-select-row-header">
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                              선호지역 {index + 1}
+                            </span>
+                            {preferredRegions.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePreferredRegion(index)}
+                                className="btn-remove-region"
+                              >
+                                삭제
+                              </button>
+                            )}
+                          </div>
+                          
+                          <div className="region-select-grid">
+                            <select
+                              className="form-input select-compact"
+                              value={region.sido}
+                              onChange={(e) => handlePreferredRegionChange(index, 'sido', e.target.value)}
+                            >
+                              <option value="ALL">도 전체</option>
+                              {regionHierarchy.map(r => (
+                                <option key={r.sido} value={r.sido}>{r.sido}</option>
+                              ))}
+                            </select>
 
-                  {/* 3. 선호지역 2 (3단계) */}
-                  <div className="form-group-compact">
-                    <label className="form-label-compact">선호지역 2</label>
-                    <div className="region-select-grid">
-                      <select
-                        className="form-input select-compact"
-                        value={prefSido2}
-                        onChange={(e) => {
-                          setPrefSido2(e.target.value);
-                          setPrefSigungu2('ALL');
-                          setPrefGu2('ALL');
-                        }}
-                      >
-                        <option value="ALL">도 전체</option>
-                        {regionHierarchy.map(r => (
-                          <option key={r.sido} value={r.sido}>{r.sido}</option>
-                        ))}
-                      </select>
+                            <select
+                              className="form-input select-compact"
+                              value={region.sigungu}
+                              disabled={region.sido === 'ALL'}
+                              onChange={(e) => handlePreferredRegionChange(index, 'sigungu', e.target.value)}
+                            >
+                              <option value="ALL">시·군·구</option>
+                              {sigunguList.map(s => (
+                                <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
+                              ))}
+                            </select>
 
-                      <select
-                        className="form-input select-compact"
-                        value={prefSigungu2}
-                        disabled={prefSido2 === 'ALL'}
-                        onChange={(e) => {
-                          setPrefSigungu2(e.target.value);
-                          setPrefGu2('ALL');
-                        }}
-                      >
-                        <option value="ALL">시·군·구</option>
-                        {(regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList || []).map(s => (
-                          <option key={s.sigungu} value={s.sigungu}>{s.sigungu}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        className="form-input select-compact"
-                        value={prefGu2}
-                        disabled={
-                          prefSigungu2 === 'ALL' || 
-                          ((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList.length || 0) === 0
-                        }
-                        onChange={(e) => setPrefGu2(e.target.value)}
-                      >
-                        <option value="ALL">구/읍 전체</option>
-                        {((regionHierarchy.find(r => r.sido === prefSido2)?.sigunguList.find(s => s.sigungu === prefSigungu2))?.guList || []).map(g => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
-                      </select>
-                    </div>
+                            <select
+                              className="form-input select-compact"
+                              value={region.gu}
+                              disabled={region.sigungu === 'ALL' || guList.length === 0}
+                              onChange={(e) => handlePreferredRegionChange(index, 'gu', e.target.value)}
+                            >
+                              <option value="ALL">구/읍 전체</option>
+                              {guList.map(g => (
+                                <option key={g} value={g}>{g}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <p className="intro-form-notice">

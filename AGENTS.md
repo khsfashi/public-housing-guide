@@ -32,3 +32,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
    
 2. **Minimize Emojis & Childish Embellishments**:
    - Do not use colorful or excessive emojis (e.g., 🚀, 🟢, 💡, 📍, 📋) in the UI code, documentation, or response messages. Maintain a professional, clean, and premium typography-oriented look.
+
+# UI & UX Design Rules
+
+Always reference and follow the design guidelines from these resources to build highly polished, premium, and professional UIs:
+- **Reddit ClaudeCode UI Design Guide**: [Claude Code UI Design Checklist](https://www.reddit.com/r/ClaudeCode/comments/1rfjovy/how_do_you_create_ui_designs_that_dont_look/?share_id=IQCQJeoOWomd94OkC6GQ_&utm_content=2&utm_medium=android_app&utm_name=androidcss&utm_source=share&utm_term=1)
+- **Impeccable Style Guide**: [Impeccable Style](https://impeccable.style/)
+- **Design for AI Checklist**: [Design for AI](https://github.com/ryanthedev/design-for-ai)
+
+Ensure that all layouts feel responsive, interactive, and premium, prioritizing the user's focus and experience. Prevent layout crowding, provide accordion/collapsible options for dense configuration forms, and support clean transitions.
