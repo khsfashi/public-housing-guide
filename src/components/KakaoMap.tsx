@@ -235,7 +235,7 @@ export default function KakaoMap({ units, selectedUnitId, onSelectUnit }: KakaoM
                 카카오 지도 API 키 오류
               </h4>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                카카오 지도 SDK 로딩 에러(403)입니다. [카카오 디벨로퍼스]에서 <strong>JavaScript 앱 키</strong> 확인 및 도메인(localhost:3000) 등록 여부를 체크해 주세요.
+                카카오 지도 SDK 로딩 에러(403)입니다. [카카오 디벨로퍼스 > 플랫폼 > Web]에 실제 배포 도메인(<code>https://public-housing-guide.vercel.app</code>) 또는 로컬 도메인(<code>localhost:3000</code>)이 정확히 등록되어 있는지 확인해 주세요.
               </p>
             </>
           )}

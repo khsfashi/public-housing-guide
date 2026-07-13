@@ -57,21 +57,22 @@ NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY=your_kakao_javascript_app_key_here
 NEXT_PUBLIC_PUBLIC_DATA_API_KEY=your_data_go_kr_api_key_here
 ```
 
-> **카카오맵 설정 팁**: 카카오 디벨로퍼스(developers.kakao.com) 설정 내 `웹 플랫폼 등록`에 `http://localhost:3000` 및 배포 도메인을 등록하고, 제품 설정에서 `지도 활성화` 상태를 **ON**으로 켜야 정상 작동합니다.
+> **카카오맵 설정 팁**: 카카오 디벨로퍼스(developers.kakao.com) 설정 내 `[내 애플리케이션] > [앱 설정] > [플랫폼] > [Web]` 항목에 배포 주소인 `https://public-housing-guide.vercel.app`과 로컬 주소 `http://localhost:3000`을 모두 웹 플랫폼 도메인에 등록하고, 제품 설정에서 `지도 활성화` 상태를 **ON**으로 켜야 정상 작동합니다.
 
-### 2. 패키지 설치 및 서버 실행
-```bash
-# 의존성 패키지 설치
-npm install
+### 2. 패키지 설치 및 실행
+* **배포 서버 바로가기**: [https://public-housing-guide.vercel.app/](https://public-housing-guide.vercel.app/)
+* **로컬 개발 환경 실행**:
+  ```bash
+  # 의존성 패키지 설치
+  npm install
 
-# 로컬 개발 서버 실행
-npm run dev
+  # 로컬 개발 서버 실행
+  npm run dev
 
-# 프로덕션 빌드 및 유효성 검사
-npm run build
-```
-
-로컬 서버 구동 후 브라우저에서 `http://localhost:3000`으로 접속하여 주택 찾기 및 상호 비교기를 사용하실 수 있습니다.
+  # 프로덕션 빌드 및 유효성 검사
+  npm run build
+  ```
+  로컬 서버 구동 후 브라우저에서 `http://localhost:3000`으로 접속하여 테스트 및 로컬 개발을 진행하실 수 있습니다.
 
 ---
 
