@@ -529,7 +529,7 @@ export default function Home() {
           <div>
             <span style={{ fontWeight: 800, letterSpacing: '-0.5px' }}>Housing Hub</span>
             <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginLeft: '10px' }}>
-              LH / SH / Private Rental Condition Comparison
+              LH / SH / 민간임대 조건 비교 분석기
             </span>
           </div>
         </div>
@@ -546,7 +546,7 @@ export default function Home() {
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' }}>
               <div className="animate-pulse" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Loading rental housing database...
+                임대주택 데이터베이스 불러오는 중...
               </div>
             </div>
           ) : (

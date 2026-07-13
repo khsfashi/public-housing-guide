@@ -144,7 +144,7 @@ export default function ComparePanel({ compareCart, onRemove, onClear }: Compare
               backgroundColor: 'var(--bg-secondary)'
             }}>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                Housing Comparison Table
+                임대 조건 비교표
               </h2>
               <button 
                 onClick={() => setIsModalOpen(false)} 

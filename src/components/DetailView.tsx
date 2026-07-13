@@ -180,7 +180,7 @@ export default function DetailView({
             }}
             className="hover-opacity"
           >
-            Apply on LH/SH Portal ↗
+            LH/SH 청약포털에서 바로가기 ↗
           </a>
         </div>
 
@@ -193,12 +193,12 @@ export default function DetailView({
           fontSize: '0.8rem'
         }}>
           <h4 style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px', fontSize: '0.82rem' }}>
-            Announcement Details
+            상위 모집 공고 정보
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', color: 'var(--text-secondary)' }}>
-            <div><strong>Title:</strong> {unit.announcementTitle}</div>
-            <div><strong>Announced:</strong> {unit.announcementDate}</div>
-            <div><strong>Deadline:</strong> {unit.deadlineDate} ({unit.status})</div>
+            <div><strong>공고명:</strong> {unit.announcementTitle}</div>
+            <div><strong>공고일자:</strong> {unit.announcementDate}</div>
+            <div><strong>마감일자:</strong> {unit.deadlineDate} ({unit.status})</div>
           </div>
         </div>
 
@@ -318,7 +318,7 @@ export default function DetailView({
           gap: '14px'
         }}>
           <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Deposit-to-Rent Conversion Simulator
+            보증금-월세 상호전환 시뮬레이터
           </h3>
 
           {/* Price Slider */}
@@ -375,14 +375,14 @@ export default function DetailView({
             }}>
               {customDeposit > unit.deposit ? (
                 <div>
-                  Notice: Increasing deposit by {formatPrice(customDeposit - unit.deposit)} reduces monthly rent by {formatPrice(unit.monthlyRent - simulatedRent)} (6.0% annual conversion applied).
+                  안내: 보증금을 {formatPrice(customDeposit - unit.deposit)} 증액하여, 월 임대료가 {formatPrice(unit.monthlyRent - simulatedRent)} 감액되었습니다. (연 6.0% 전환이율 적용)
                 </div>
               ) : customDeposit < unit.deposit ? (
                 <div>
-                  Notice: Lowering deposit by {formatPrice(unit.deposit - customDeposit)} increases monthly rent by {formatPrice(simulatedRent - unit.monthlyRent)} (3.5% annual conversion applied).
+                  안내: 보증금을 {formatPrice(unit.deposit - customDeposit)} 감액하여, 월 임대료가 {formatPrice(simulatedRent - unit.monthlyRent)} 증액되었습니다. (연 3.5% 전환이율 적용)
                 </div>
               ) : (
-                <div>Notice: Showing baseline terms. Drag the slider to simulate adjustments.</div>
+                <div>안내: 기본 임대 조건입니다. 슬라이더를 조절하여 상호전환 조건을 시뮬레이션해 보세요.</div>
               )}
             </div>
           </div>

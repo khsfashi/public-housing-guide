@@ -1,77 +1,71 @@
 # Housing Hub
-> LH, SH, and Private Rental flat-unit search and condition comparison platform
+> LH, SH 및 민간 임대주택 매물 검색 및 조건 비교 플랫폼
 
-A Next.js application that flattens public and private rental announcements into individual housing units. This allows users to filter by specific districts, pyeong sizes, and rental conditions, maps unit locations using Kakao Maps, and provides direct links to official application portals.
-
----
-
-## Features
-
-1. **Flat-Unit Search**
-   - Flatten announcements and nested house types into individual units (e.g., "Villa A 101" instead of the parent announcement).
-   - Filter and query specific units without opening large PDF/HWP announcement documents.
-
-2. **Cascading Region Filter**
-   - Support South Korea's 17 administrative provinces (Sido) and their municipal districts (Sigungu).
-   - Selecting a Sido dynamically updates the Sigungu options to ensure precise targeting.
-
-3. **Granular Price & Area Filters**
-   - **Pyeong Filter**: Select minimum and maximum sizes (from 5 to 45+ pyeong).
-   - **Price Filter**: Set minimum and maximum boundaries for deposits and monthly rents.
-
-4. **Geolocated Map Integration**
-   - Individual units are mapped based on their specific addresses, allowing multiple buildings under a single announcement to be scattered accurately.
-   - Includes a fallback interactive grid canvas map if the Kakao Maps SDK key is not configured.
-
-5. **Deposit Conversion Calculator**
-   - Simulate rental adjustments using standard conversion rates (6.0% for increasing deposit, 3.5% for lowering deposit).
-
-6. **Direct Application Links**
-   - Connects each unit directly to the LH Subscription Plus or SH Internet Subscription portal using the direct `applyUrl` field.
-
-7. **Open API Integration**
-   - Server-side Next.js route handler (`/api/announcements`) fetches lease notice info from data.go.kr.
-   - Automatically falls back to a 120+ simulated nationwide dataset when API keys are absent.
+LH, SH 및 민간임대 공고에 포함된 복잡한 주택형 정보를 개별 주택 단위로 평탄화하여 제공하는 Next.js 애플리케이션입니다. 사용자들은 자치구별, 평형별, 임대 조건별 필터링을 거쳐 지도 상에서 매물 위치를 확인하고 청약포털로 바로 이동할 수 있습니다.
 
 ---
 
-## Tech Stack
+## 주요 기능
+
+1. **개별 매물 단위 검색 (Flat-Unit Search)**
+   - 복잡한 공고문 내 주택형을 쪼개어 개별 매물 단위로 제공하여 불필요하게 긴 한글(HWP)/PDF 문서를 열지 않고도 원하는 매물을 바로 비교 검색할 수 있습니다.
+
+2. **2단계 행정구역 필터 (Cascading Region Filter)**
+   - 전국 17개 시·도 및 시·군·구 수준의 cascading 필터를 지원합니다. 시·도를 선택하면 해당하는 시·군·구 선택지가 자동으로 업데이트되어 세부 지역 설정이 편리합니다.
+
+3. **정밀한 가격 및 면적 필터**
+   - **평수 필터**: 5평부터 45평 이상까지 최소/최대 평수를 직접 선택하여 필터링합니다.
+   - **가격 필터**: 임대 보증금 및 월세의 범위를 상세히 조절할 수 있습니다.
+
+4. **지도 연동 및 가상 맵 Fallback**
+   - 개별 매물의 주소 좌표를 분석하여 지도 위에 마커로 시각화합니다.
+   - Kakao Maps API 키가 연동되지 않은 환경에서는 자체 구현된 한강 중심의 인터랙티브 가상 지도를Fallback으로 렌더링합니다.
+
+5. **상호전환 보증금 계산 시뮬레이터**
+   - 보증금 증액 시 월세 감액율(연 6.0%), 보증금 감액 시 월세 증액율(연 3.5%) 표준 요율을 반영하여 보증금 슬라이더 조절에 따른 예상 월 임대료를 실시간 모의 계산합니다.
+
+6. **청약 사이트 바로가기**
+   - LH 청약플러스 또는 SH 인터넷 청약 시스템의 개별 신청 링크를 연동하여 마음에 드는 매물에서 원클릭으로 접수처에 접속할 수 있습니다.
+
+7. **개인 맞춤 설정 및 가점 기반 추천순 정렬**
+   - 사용자이름(Username) 기반으로 프로필을 설정하고 현재 거주지, 거주 년수, 연령, 선호 지역을 입력할 수 있습니다. (Disclaimers: 개인정보는 서버에 수집되지 않고 브라우저 로컬 저장소에만 보관됩니다.)
+   - 현재 거주지와 년수 가점, 연령(청년/신혼부부/고령자 자격 여부) 및 선호도를 결합해 가점 스코어를 부여하고, **"개인 맞춤 추천순"**으로 즉시 정렬하여 `★ 추천 {순위}위` 뱃지를 매물 리스트에 띄워줍니다.
+
+8. **공고 찜(북마크) 및 자동 정리**
+   - 마음에 드는 매물을 찜 목록에 담아둘 수 있으며, 공고의 접수 마감 기한이 지나면 앱 접속 시 자동으로 찜 목록에서 제외하고 알림을 제공합니다.
+   - 찜한 공고의 상태가 '모집중'으로 전환될 시 브라우저 푸시 알림 및 웹 배너를 띄웁니다. (시뮬레이터 제공)
+
+---
+
+## 기술 스택
 
 * **Framework**: Next.js 16.2.10 (App Router), React 19, TypeScript
-* **Styling**: Vanilla CSS, CSS Modules
+* **Styling**: Vanilla CSS (globals.css 변수 및 CSS Modules)
 * **Mapping**: Kakao Maps JavaScript SDK
-* **Data Sources**: Public Data Portal (data.go.kr) Open API
+* **Data Source**: 공공데이터포털(data.go.kr) 오픈 API 연동용 Route Handler (`/api/announcements`)
 
 ---
 
-## Getting Started
+## 시작하기
 
-### 1. Environment Variables
-Create a `.env.local` file in the root directory:
+### 1. 환경 변수 설정
+프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하고 아래 키를 입력합니다.
 
 ```env
-# Kakao Maps App Key (JavaScript Key required)
+# Kakao Maps App Key (JavaScript 키 입력)
 NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY=your_kakao_javascript_app_key_here
 
-# Public Data Portal Service Key (Encoding required)
+# 공공데이터포털 서비스 인증키 (Encoding 키 입력)
 NEXT_PUBLIC_PUBLIC_DATA_API_KEY=your_data_go_kr_api_key_here
 ```
 
-> **Configuration Tip**: Add both `https://public-housing-guide.vercel.app` and `http://localhost:3000` to the Web platform settings in Kakao Developers console (Apps > Settings > Platforms > Web). Enable Maps status in Product Settings.
+> **설정 팁**: 카카오 디벨로퍼스 콘솔(내 애플리케이션 > 플랫폼 > Web)에서 `http://localhost:3000` 및 배포 도메인을 웹 도메인 목록에 꼭 추가해야 지도 API를 불러올 수 있습니다.
 
-### 2. Setup and Execution
-* **Production URL**: [https://public-housing-guide.vercel.app/](https://public-housing-guide.vercel.app/)
-* **Local Development**:
+### 2. 설치 및 실행
+* **배포 URL**: [https://public-housing-guide.vercel.app/](https://public-housing-guide.vercel.app/)
+* **로컬 개발 모드**:
   ```bash
   npm install
   npm run dev
-  npm run build
   ```
-  Open `http://localhost:3000` to run and test the server locally.
-
----
-
-## Development Guidelines
-Refer to [AGENTS.md](file:///d:/home/AGENTS.md) for commit conventions and workspace rules.
-* **Commit Prefix**: Use `feat:`, `fix:`, `refactor:`, `docs:`, or `style:`.
-* **Verification**: Always run `npm run build` locally before pushing to remote.
+  브라우저에서 `http://localhost:3000`을 입력하여 확인합니다.

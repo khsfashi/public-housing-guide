@@ -220,19 +220,19 @@ export default function KakaoMap({ units, selectedUnitId, onSelectUnit }: KakaoM
           {isKeyMissing ? (
             <>
               <h4 style={{ color: 'var(--primary)', marginBottom: '4px', fontSize: '0.85rem', margin: 0 }}>
-                Interactive Virtual Map Active
+                가상 인터랙티브 지도 활성화됨
               </h4>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginTop: '4px' }}>
-                Kakao Maps SDK key is not configured. Falling back to the offline interactive map. Add <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code> to <code>.env.local</code> to load the live map.
+                카카오맵 SDK 키가 설정되지 않아 가상 오프라인 지도를 표시합니다. 로컬 <code>.env.local</code> 파일에 <code>NEXT_PUBLIC_KAKAO_MAP_CLIENT_KEY</code>를 추가하면 실제 지도가 연동됩니다.
               </p>
             </>
           ) : (
             <>
               <h4 style={{ color: '#ef4444', marginBottom: '4px', fontSize: '0.85rem', margin: 0 }}>
-                Kakao Maps API Key Notice
+                카카오맵 API 키 연동 안내
               </h4>
               <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginTop: '4px' }}>
-                SDK loading failed (403). Make sure your Javascript App Key and the deployment domain (<code>https://public-housing-guide.vercel.app</code>) are registered in Kakao Developers console.
+                지도 SDK를 불러오지 못했습니다 (403 에러). 카카오 개발자 콘솔에서 발급받은 JavaScript 키가 맞는지, 그리고 Web 플랫폼 설정에 현재 도메인(<code>https://public-housing-guide.vercel.app</code> 또는 <code>http://localhost:3000</code>)이 등록되어 있는지 확인해 주세요.
               </p>
             </>
           )}
