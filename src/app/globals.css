@@ -1157,3 +1157,22 @@ html, body {
   color: #ef4444;
   background-color: rgba(239, 68, 68, 0.08);
 }
+
+/* ==========================================================================
+   FILTER OVERLAY DRAWER
+   ========================================================================== */
+.filter-overlay-drawer {
+  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
