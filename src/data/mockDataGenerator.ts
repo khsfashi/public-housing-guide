@@ -91,9 +91,9 @@ export function generateAnnouncements(): Announcement[] {
       
       // Generates two sizes per building (e.g., small room vs. medium room)
       const isLH = config.provider === 'LH';
-      const applyUrl = isLH 
-        ? 'https://apply.lh.or.kr/lh/co/menu.do?miNo=1157' 
-        : 'https://www.i-sh.co.kr/app/';
+      let applyUrl = 'https://www.i-sh.co.kr/app/';
+      if (config.provider === 'LH') applyUrl = 'https://apply.lh.or.kr/lh/co/menu.do?miNo=1157';
+      if (config.provider === 'PRIVATE') applyUrl = 'https://form.naver.com/';
 
       // Unit 1: Smaller Studio (5평 - 9평)
       const excl1 = +(18 + unitIdx * 2.3).toFixed(2);
@@ -161,7 +161,7 @@ export function generateAnnouncements(): Announcement[] {
       latitude: defaultCenter.lat,
       longitude: defaultCenter.lng,
       houseTypes,
-      originalUrl: config.provider === 'LH' ? 'https://apply.lh.or.kr/' : 'https://www.i-sh.co.kr/app/'
+      originalUrl: config.provider === 'LH' ? 'https://apply.lh.or.kr/' : (config.provider === 'PRIVATE' ? 'https://form.naver.com/' : 'https://www.i-sh.co.kr/app/')
     });
   });
 
@@ -187,7 +187,7 @@ export function generateAnnouncements(): Announcement[] {
     const center = regionalCenters[cfg.region] || defaultCenter;
     const bldName = buildingNames[index % buildingNames.length];
     const address = `${cfg.region} ${bldName} 아파트 102동`;
-    const applyUrl = cfg.prov === 'LH' ? 'https://apply.lh.or.kr/lh/co/menu.do?miNo=1157' : 'https://www.i-sh.co.kr/app/';
+    const applyUrl = cfg.prov === 'LH' ? 'https://apply.lh.or.kr/lh/co/menu.do?miNo=1157' : (cfg.prov === 'PRIVATE' ? 'https://form.naver.com/' : 'https://www.i-sh.co.kr/app/');
 
     // Generate 3 unit sizes per announcement (small, medium, large)
     const houseTypes: HouseType[] = [
@@ -263,7 +263,7 @@ export function generateAnnouncements(): Announcement[] {
       latitude: center.lat,
       longitude: center.lng,
       houseTypes,
-      originalUrl: 'https://apply.lh.or.kr/'
+      originalUrl: cfg.prov === 'LH' ? 'https://apply.lh.or.kr/' : (cfg.prov === 'PRIVATE' ? 'https://form.naver.com/' : 'https://www.i-sh.co.kr/app/')
     });
   });
 
@@ -286,7 +286,7 @@ export function generateFlatUnits(): FlatHouseUnit[] {
       const longitude = ht.longitude ?? ann.longitude;
       const applyUrl = ht.applyUrl || (ann.provider === 'LH' 
         ? 'https://apply.lh.or.kr/lh/co/menu.do?miNo=1157' 
-        : 'https://www.i-sh.co.kr/app/');
+        : (ann.provider === 'PRIVATE' ? 'https://form.naver.com/' : 'https://www.i-sh.co.kr/app/'));
 
       flatList.push({
         id: ht.id,
