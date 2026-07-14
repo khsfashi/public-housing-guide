@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FlatHouseUnit, ProviderType, HousingType, UserProfileData } from '../types';
 import { regionsData, getRegionHierarchy } from '../data/regions';
 
@@ -444,6 +444,16 @@ export default function Dashboard({
     
     return parts.join(' · ');
   };
+
+  // Scroll to selected unit when selectedUnitId changes
+  useEffect(() => {
+    if (selectedUnitId) {
+      const el = document.getElementById(`unit-card-${selectedUnitId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [selectedUnitId]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
@@ -1381,6 +1391,7 @@ export default function Dashboard({
     return (
       <div
         key={unit.id}
+        id={`unit-card-${unit.id}`}
         onClick={() => onSelectUnit(unit.id)}
         className={`house-card ${isSelected ? 'selected' : ''}`}
       >
