@@ -756,13 +756,15 @@ export default function Dashboard({
               <div style={{ display: 'flex', gap: '16px', padding: '4px 0' }}>
                 {(['LH', 'SH', 'PRIVATE'] as ProviderType[]).map(prov => {
                   const active = selectedProviders.has(prov);
+                  const isDisabled = prov !== 'LH';
                   return (
-                    <label key={prov} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', cursor: 'pointer', userSelect: 'none', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    <label key={prov} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', cursor: isDisabled ? 'not-allowed' : 'pointer', userSelect: 'none', fontWeight: 600, color: isDisabled ? 'var(--text-tertiary)' : 'var(--text-secondary)' }} title={isDisabled ? "현재 공공데이터 OpenAPI는 LH만 지원합니다." : ""}>
                       <input
                         type="checkbox"
                         checked={active}
+                        disabled={isDisabled}
                         onChange={() => toggleProvider(prov)}
-                        style={{ width: '15px', height: '15px', cursor: 'pointer' }}
+                        style={{ width: '15px', height: '15px', cursor: isDisabled ? 'not-allowed' : 'pointer' }}
                       />
                       {prov === 'LH' ? 'LH 한국토지주택공사' : prov === 'SH' ? 'SH 서울주택도시공사' : '민간 임대'}
                     </label>

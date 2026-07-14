@@ -33,7 +33,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   
   const [selectedProviders, setSelectedProviders] = useState<Set<ProviderType>>(
-    new Set<ProviderType>(['LH', 'SH', 'PRIVATE'])
+    new Set<ProviderType>(['LH'])
   );
 
   const [selectedHousingTypes, setSelectedHousingTypes] = useState<Set<HousingType>>(
